@@ -1,4 +1,5 @@
 import java.io.*;
+import java.lang.Math;
 
 class Puzzle1 {
 	public static void main(String[] args) throws IOException {
@@ -16,9 +17,7 @@ class Puzzle1 {
 				calories = 0;
 			} else {
 				calories += Integer.parseInt(line.trim());				
-				if (calories > maxCalories) {
-					maxCalories = calories;
-				}
+                maxCalories = Math.max(calories, maxCalories);
 			}
 			// debug
 			System.out.printf("%s %d %d\n", line, calories, maxCalories);
