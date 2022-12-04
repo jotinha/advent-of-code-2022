@@ -8,10 +8,23 @@ int GetPriority(char c) {
     return (int)(c >= 'a' ? c - 'a' + 1 : c - 'A' + 27);
 }
 
+ulong ToBit(int code) {
+    return (ulong)1L << code;
+}
+
+ulong SetAdd(ulong bitmask, int code) {
+    return bitmask | ToBit(code); 
+}
+
+bool SetContains(ulong bitmask, int code) {
+    return (bitmask & ToBit(code)) != 0; 
+}
+
 int total = 0;
 
 foreach (string line in lines) {
-    ulong[] bitmask = {0,0};
+    ulong bitmask = 0;
+    bool found = false;
 
     Debug.Assert(line.Length % 2 == 0);
     int half = line.Length / 2;
@@ -23,14 +36,14 @@ foreach (string line in lines) {
 
         if (i == half) Console.Write('|');
 
-        ulong bit = (ulong)1L << priority;
-        
-        if ((i>=half) && ((bitmask[0] & bit) != 0) && ((bitmask[1] & bit) == 0)) {
+        if (i < half) {
+            bitmask = SetAdd(bitmask, priority); //set bit on the left side
+        } else if (SetContains(bitmask,priority) && !found) {
             //Console.Write("{0} ", priority);
             Console.Write("*");
             total += priority;
+            found = true;
         }
-        bitmask[i<half ? 0:1] |= bit; //set bit on either the left or right mask       
         Console.Write("{0} ",priority);
     }
     Console.Write('\n');
