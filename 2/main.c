@@ -1,14 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int decode1(char code) {
-    return code - 'A' + 1;
+int decode(char code) {
+    // if A or X ->1, B or Y -> 2, C or Z -> 3
+    return (code - 'A') % 23 + 1;
 }
-
-int decode2(char code) {
-    return code - 'X' + 1;
-}
-
 int pick2(int code1, char strategy) {
     if (strategy == 'Y') { // draw
         return code1;
@@ -48,7 +44,7 @@ int main(void) {
 
     //while(fgets(line,8,fp) != NULL) {
     while(fscanf(fp, "%c %c\n", &code1, &strategy) == 2) {
-        code1 = decode1(code1);
+        code1 = decode(code1);
         code2 = pick2(code1, strategy);
         int outcome = play(code1, code2);
         int points = code2 + outcome * 3;
