@@ -26,7 +26,7 @@ int total_b = 0;
 ulong left = 0;
 ulong line1 = 0;
 ulong line2 = 0;
-bool foundInLine, foundInGroup;
+bool foundInLine, foundInGroup = false;
 
 for (int l=0; l < lines.Length; l++) {
     string line = lines[l];
@@ -54,6 +54,14 @@ for (int l=0; l < lines.Length; l++) {
             foundInLine = true;
         }
         //Console.Write("{0} ",priority);
+        if ( l%3 == 0) {
+            line1 = SetAdd(line1, priority);
+        } else if ( l % 3 == 1) {
+            line2 = SetAdd(line2,priority);
+        } else if (SetContains(line1 & line2, priority) && !foundInGroup) {
+            total_b += priority;
+            foundInGroup = true;
+        }
     }
     //Console.Write('\n');
 }
