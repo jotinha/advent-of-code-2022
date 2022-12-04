@@ -9,6 +9,18 @@ int decode2(char code) {
     return code - 'X' + 1;
 }
 
+int pick2(int code1, char strategy) {
+    if (strategy == 'Y') { // draw
+        return code1;
+    } else if (strategy == 'Z') { // win
+        //1->2 2->3 3->1       
+        return code1 % 3 + 1; 
+    } else { // lose
+        //1->3 2->1 3->2
+        return (code1+1) % 3 + 1;
+    }
+}
+
 int play(int a, int b) {
     // 0 if losing, 1 if draw, 2 if win
 
@@ -26,7 +38,7 @@ int main(void) {
     printf("Hello world\n");
 
     char line[8];
-    char code1, code2;
+    char code1, code2, strategy ;
     int total = 0;
  
     FILE *fp;
@@ -35,9 +47,9 @@ int main(void) {
     }
 
     //while(fgets(line,8,fp) != NULL) {
-    while(fscanf(fp, "%c %c\n", &code1, &code2) == 2) {
+    while(fscanf(fp, "%c %c\n", &code1, &strategy) == 2) {
         code1 = decode1(code1);
-        code2 = decode2(code2);
+        code2 = pick2(code1, strategy);
         int outcome = play(code1, code2);
         int points = code2 + outcome * 3;
         printf("%d %d %d %d\n", code1, code2, outcome, points);
