@@ -16,7 +16,17 @@ select
 from data2
 )
 
-select count(1) from data3
-where 
-    (a_start <= b_start and a_end >= b_end)
-    or (b_start <= a_start and b_end >= a_end)
+select 
+    sum(case 
+        when (a_start <= b_start and a_end >= b_end) then 1
+        when (b_start <= a_start and b_end >= a_end) then 1
+        else 0
+    end) as total_a,
+    
+    sum(case
+        when (a_end < b_start) then 0
+        when (b_end < a_start) then 0
+        else 1
+    end) as total_b
+
+from data3
