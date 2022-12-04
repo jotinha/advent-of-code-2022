@@ -20,33 +20,42 @@ bool SetContains(ulong bitmask, int code) {
     return (bitmask & ToBit(code)) != 0; 
 }
 
-int total = 0;
+int total_a = 0;
+int total_b = 0;
 
-foreach (string line in lines) {
-    ulong bitmask = 0;
-    bool found = false;
+ulong left = 0;
+ulong line1 = 0;
+ulong line2 = 0;
+bool foundInLine, foundInGroup;
 
-    Debug.Assert(line.Length % 2 == 0);
+for (int l=0; l < lines.Length; l++) {
+    string line = lines[l];
+    left = 0;
+    foundInLine = false;
+    if (l % 3 == 0) {
+        foundInGroup = false;
+        line1 = 0;
+        line2 = 0;
+    }
     int half = line.Length / 2;
-    //Console.WriteLine("{0} {1}", line, half);
 
     for(int i = 0; i < line.Length; i++) {
         char c = line[i];
         int priority = GetPriority(c); 
 
-        if (i == half) Console.Write('|');
+        //if (i == half) Console.Write('|');
 
         if (i < half) {
-            bitmask = SetAdd(bitmask, priority); //set bit on the left side
-        } else if (SetContains(bitmask,priority) && !found) {
+            left = SetAdd(left, priority); //set bit on the left side
+        } else if (SetContains(left,priority) && !foundInLine) {
             //Console.Write("{0} ", priority);
-            Console.Write("*");
-            total += priority;
-            found = true;
+            //Console.Write("*");
+            total_a += priority;
+            foundInLine = true;
         }
-        Console.Write("{0} ",priority);
+        //Console.Write("{0} ",priority);
     }
-    Console.Write('\n');
+    //Console.Write('\n');
 }
 
-Console.WriteLine("Total priority: {0}", total); 
+Console.WriteLine("{0},{1}",total_a,total_b); 
