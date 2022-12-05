@@ -44,8 +44,23 @@ parseInputData :: String -> ([Instruction],[Stack])
 parseInputData contents = (map parseInstruction (body ls), parseStacks (header ls))
     where ls = lines contents
 
+addToStack :: Stack -> Stack -> Stack
+addToStack what dest = dest ++ what
+
+execute :: Instruction -> [Stack] -> [Stack]
+execute (n, from, to) stacks = [newStackAt i | i <- [1..(length stacks)]]
+    where 
+        toMove = reverse $ take n $ oldStackAt from
+        oldStackAt i = stacks !! (i-1)
+        newStackAt i | i == from = drop n (oldStackAt i) 
+                     | i == to = toMove ++ (oldStackAt i)
+                     | otherwise = oldStackAt i
+    
+executeMany :: [Instruction] -> [Stack] -> [Stack]
+executeMany insts stacks = foldl (flip execute) stacks insts
+
 main = do
     putStrLn "Hello world"
     contents <- readFile "test"
-    putStrLn (show $ parseInputData contents) 
+    putStrLn (show $ executeMany [(2,2,1)] $ snd $ parseInputData contents)
     
