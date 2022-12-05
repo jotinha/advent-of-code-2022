@@ -40,16 +40,17 @@ parseStacks ls = [parseStack i rows | i <- [1..maxIdx]]
         maxIdx = last $ parseAllNumbers $ last ls 
 
 execute :: Version -> Instruction -> [Stack] -> [Stack]
-execute version (n, from, to) stacks = map transform [1..(length stacks)]
+execute version (n, from, to) stacks = [transform i s | (i,s) <- zip [1..] stacks]
     where 
-        toMove = take n $ oldStackAt from
-        toMove' | version == A = reverse toMove
-                | version == B = toMove
-        oldStackAt i = stacks !! (i-1)
-        transform i | i == from = drop n (oldStackAt i)
-                    | i == to   = toMove' ++ (oldStackAt i)
-                    | otherwise = oldStackAt i
-    
+        source = stacks !! (from-1)
+        transform i s | i == from = drop n s
+                      | i == to   = (pickup version n source) ++ s
+                      | otherwise = s
+        
+pickup :: Version -> Int -> Stack -> Stack
+pickup A n s = reverse $ take n s
+pickup B n s = take n s
+
 executeMany :: Version -> [Instruction] -> [Stack] ->  [Stack]
 executeMany version insts stacks = foldl executor stacks insts
     where executor = flip (execute version)
