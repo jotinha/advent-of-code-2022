@@ -25,7 +25,7 @@ isin xs x = any (== x) xs
 iswhitespace = isin " \n\t\r"
 trim = dropWhileEnd iswhitespace . dropWhile iswhitespace
 
-header text = takeWhile (not.null) $ map trim text 
+header text = takeWhile (not.null.trim) text 
 body text = dropWhile null $ dropWhile (not.null) $ map trim text
 
 getColumn :: Int -> [[a]] -> [a]
