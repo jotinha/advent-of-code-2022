@@ -8,9 +8,11 @@ type Stack = [Char]
 data Version = A | B deriving (Eq)
 
 maybeAt :: Int -> [a] -> Maybe a
-maybeAt i xs | i < 0 = Nothing 
-             | i >= length xs  = Nothing
-             | otherwise = Just (xs !! i)
+maybeAt _ [] = Nothing
+maybeAt i (x:xs) | i > 0 = maybeAt (i-1) xs
+                 | i == 0 = Just x
+                 | i < 0 = Nothing
+
 
 parseInt :: String -> Int
 parseInt s = fromMaybe 0 (readMaybe s :: Maybe Int)
