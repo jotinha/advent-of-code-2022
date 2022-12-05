@@ -59,8 +59,13 @@ execute (n, from, to) stacks = [newStackAt i | i <- [1..(length stacks)]]
 executeMany :: [Instruction] -> [Stack] -> [Stack]
 executeMany insts stacks = foldl (flip execute) stacks insts
 
+topOfStacks :: [Stack] -> [Char]
+topOfStacks = map head
+
+resultsPartA contents = topOfStacks $ executeMany instructions stacks
+    where (instructions, stacks) = parseInputData contents
+
 main = do
-    putStrLn "Hello world"
-    contents <- readFile "test"
-    putStrLn (show $ executeMany [(2,2,1)] $ snd $ parseInputData contents)
+    contents <- readFile "input"
+    putStrLn $ resultsPartA contents
     
