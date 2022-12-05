@@ -24,8 +24,7 @@ getColumn 0 = map head
 getColumn i = getColumn (i-1) . map tail
 
 parseInstruction :: String -> Instruction 
-parseInstruction = toTuple . parseAllNumbers
-    where toTuple (x:y:z:rest) = (x,y,z)
+parseInstruction line = (x,y,z) where [x,y,z] = parseAllNumbers line 
 
 parseInstructions :: [String] -> [Instruction]
 parseInstructions = map parseInstruction
