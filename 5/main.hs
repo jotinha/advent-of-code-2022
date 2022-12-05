@@ -5,6 +5,7 @@ import Text.Read
 
 type Instruction = (Int, Int, Int)
 type Stack = [Char]
+data Version = A | B deriving (Eq)
 
 maybeAt :: Int -> [a] -> Maybe a
 maybeAt i xs | i < 0 = Nothing 
@@ -47,25 +48,29 @@ parseInputData contents = (map parseInstruction (body ls), parseStacks (header l
 addToStack :: Stack -> Stack -> Stack
 addToStack what dest = dest ++ what
 
-execute :: Instruction -> [Stack] -> [Stack]
-execute (n, from, to) stacks = [newStackAt i | i <- [1..(length stacks)]]
+execute :: Instruction -> [Stack] -> Version -> [Stack]
+execute (n, from, to) stacks version = [newStackAt i | i <- [1..(length stacks)]]
     where 
-        toMove = reverse $ take n $ oldStackAt from
+        toMove = take n $ oldStackAt from
+        toMove' | version == A = reverse toMove
+                | version == B = toMove
         oldStackAt i = stacks !! (i-1)
         newStackAt i | i == from = drop n (oldStackAt i) 
-                     | i == to = toMove ++ (oldStackAt i)
+                     | i == to = toMove' ++ (oldStackAt i)
                      | otherwise = oldStackAt i
     
-executeMany :: [Instruction] -> [Stack] -> [Stack]
-executeMany insts stacks = foldl (flip execute) stacks insts
+executeMany :: [Instruction] -> [Stack] -> Version -> [Stack]
+executeMany insts stacks version = foldl (\acc inst -> execute inst acc version) stacks insts
 
 topOfStacks :: [Stack] -> [Char]
 topOfStacks = map head
 
-resultsPartA contents = topOfStacks $ executeMany instructions stacks
+resultsPartA contents = topOfStacks $ executeMany instructions stacks A
+    where (instructions, stacks) = parseInputData contents
+resultsPartB contents = topOfStacks $ executeMany instructions stacks B
     where (instructions, stacks) = parseInputData contents
 
 main = do
     contents <- readFile "input"
-    putStrLn $ resultsPartA contents
+    putStrLn $ (resultsPartA contents) ++ "," ++ (resultsPartB contents)
     
