@@ -3,12 +3,7 @@ import Data.List
 import Data.Maybe
 import Text.Read
 
-data Instruction = Instruction {
-    stack :: Int, 
-    from :: Int,
-    to :: Int
-} deriving Show
-
+type Instruction = (Int, Int, Int)
 type Stack = [Char]
 
 maybeAt :: Int -> [a] -> Maybe a
@@ -23,8 +18,8 @@ getAllNumbers :: String -> [Int]
 getAllNumbers line = filter (>0) $ map parseInt $ words line 
 
 parseInstruction :: String -> Instruction 
-parseInstruction = fromList . getAllNumbers
-    where fromList (x:y:z:rest) = Instruction x y z
+parseInstruction = toTuple . getAllNumbers
+    where toTuple (x:y:z:rest) = (x,y,z)
 
 isin xs x = any (== x) xs
 iswhitespace = isin " \n\t\r"
