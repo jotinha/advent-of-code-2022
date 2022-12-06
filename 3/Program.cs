@@ -1,7 +1,5 @@
 ﻿using System.Diagnostics;
 
-Console.WriteLine("Hello, World!");
-
 string[] lines = System.IO.File.ReadAllLines(@"input");
 
 int GetPriority(char c) {
