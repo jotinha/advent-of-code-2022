@@ -24,8 +24,9 @@ class Puzzle1 {
                     Arrays.sort(topCalories);
                 }
             }
-            System.out.printf("%s %d %s\n", line, calories, Arrays.toString(topCalories));
+            //System.out.printf("%s %d %s\n", line, calories, Arrays.toString(topCalories));
         }
-        System.out.printf("%d\n", Arrays.stream(topCalories).sum());
+        
+        System.out.printf("%d,%d\n", topCalories[2], Arrays.stream(topCalories).sum());
     }
 }    
