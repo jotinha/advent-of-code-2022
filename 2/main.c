@@ -31,7 +31,7 @@ int play(int a, int b) {
 }
 
 int main(void) {
-    printf("Hello world\n");
+    //printf("Hello world\n");
 
     char line[8];
     char code1, code2, strategy ;
@@ -48,10 +48,11 @@ int main(void) {
         code2 = pick2(code1, strategy);
         int outcome = play(code1, code2);
         int points = code2 + outcome * 3;
-        printf("%d %d %d %d\n", code1, code2, outcome, points);
+        //printf("%d %d %d %d\n", code1, code2, outcome, points);
         total += points;
     }
-    printf("Total points: %d\n", total);
+    //printf("Total points: %d\n", total);
+    printf("FIXME,FIXME\n");
     
 }
 
