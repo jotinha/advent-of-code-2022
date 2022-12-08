@@ -58,9 +58,10 @@ func main() {
     check(err)
 
     answer := 0
+    packetSize := 14
     
     for i, c := range dat {
-        if (answer == 0 && i >= 3 && allDifferent(dat[max(0,i-3):i+1])) {
+        if (answer == 0 && i >= (packetSize-1) && allDifferent(dat[max(0,i-packetSize+1):i+1])) {
             fmt.Print("*")
             answer = i+1;
         }
