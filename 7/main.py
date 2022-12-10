@@ -12,13 +12,12 @@ sizes = defaultdict(lambda : 0)
 cwd = ()
 
 for line in open("input"): 
-    # print(line, cwd)
+    #print(cwd)
     match line.split():
         case ["$", "cd", ".."]: 
-            cwd = cwd[:-1]
-            #cwd = cwd.parent
+            cwd = parent(cwd) 
         case ["$", "cd", name]:
-            cwd = (*cwd, name)
+            cwd = child(cwd, name)
         case ["$", "ls"]:
             pass
         case ["dir", _]:
@@ -29,9 +28,12 @@ for line in open("input"):
             for d in parents(cwd): # update parents as well
                 sizes[d] += size
 
-ans1 = sum(s for s in sizes.values() if s < 100_000)
-ans2 = "TODO"
+used_size = sizes[("/",)] 
+disk_size = 70_000_000
+need_size = 30_000_000
 
+ans1 = sum(s for s in sizes.values() if s < 100_000)
+ans2 = min(s for s in sizes.values() if s > need_size - (disk_size - used_size))
 print(f"{ans1},{ans2}")
         
 
