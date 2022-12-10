@@ -1,2 +1,2 @@
 all:
-	scala main.sc
+	python3 main.py
