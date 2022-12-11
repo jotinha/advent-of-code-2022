@@ -12,18 +12,23 @@ object Puzzle8 {
 
     val areVisibleLeft = (lst: Seq[Int]) => areVisibleOneSide(lst)
     val areVisibleRight = (lst: Seq[Int]) => areVisibleOneSide(lst.reverse).reverse
-
-    def areVisibleBothSides(lst: Seq[Int]) : Seq[Boolean] = 
-         (areVisibleLeft(lst) zip areVisibleRight(lst)).map(_|_) 
+    
+    def ors(a: Seq[Boolean], b: Seq[Boolean]) : Seq[Boolean] =
+        (a zip b).map(_|_)
 
     def main(args: Array[String]) = {
-        val lines = Source.fromFile("test").getLines()
-        val rows = lines.map(_.map(_.asDigit))        
+        val lines = Source.fromFile("input").getLines()
+        val rows = lines.map(_.map(_.asDigit)).toSeq
+        val cols = rows.transpose
  
-        val visibleRows = rows.map(areVisibleBothSides)
-        visibleRows.foreach(println) 
+        val visibleRows = rows.map(l => ors(areVisibleLeft(l), areVisibleRight(l)))
+        val visibleCols = cols.map(l => ors(areVisibleLeft(l), areVisibleRight(l)))
+
+        val visible = (visibleRows zip visibleCols.transpose).map(ors)
         
-        val ans1 = "TODO";
+        val count = visible.flatten.count(_ == true)
+
+        val ans1 = count;
         val ans2 = "TODO";
         println(s"$ans1,$ans2")
     }
