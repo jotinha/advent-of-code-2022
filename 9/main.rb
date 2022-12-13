@@ -58,7 +58,7 @@ def sign(x) x <=> 0 end
 def repr_cmd(cmd) "#{cmd.dir} #{cmd.steps}" end
 def repr_pos(pos) "(#{pos.x},#{pos.y})" end
 
-all_tail_positions = Set.new([tail])
+all_tail_positions = Set.new([])
 
 cmds.each do |cmd|
     puts repr_cmd(cmd)
