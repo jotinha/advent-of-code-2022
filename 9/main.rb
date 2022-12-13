@@ -1,32 +1,74 @@
+require "Set"
+
 Cmd = Struct.new(:dir, :steps)
 Pos = Struct.new(:x, :y)
 
-cmds = File.readlines("test").map { |line|
+cmds = File.readlines("input").map { |line|
     x  = line.strip.split
     Cmd.new(x[0].to_sym, x[1].to_i)
 }
 
-head = tail = Pos.new(0,0)
+head = Pos.new(0,0)
+tail = Pos.new(0,0)
 
-def move!(cmd, pos)
-    while cmd.steps > 0 do
-        case cmd.dir
-            when :R
-                pos.x += 1
-            when :L
-                pos.x -= 1
-            when :U
-                pos.y += 1
-            when :D
-                pos.y -= 1
-        end
-        cmd.steps-=1
+def move!(pos, x, y)
+    pos.x += x
+    pos.y += y
+end
+
+def move_dir!(dir, pos)
+    case dir
+        when :R
+            move!(pos,1,0)
+        when :L
+            move!(pos,-1,0)
+        when :U
+            move!(pos,0,1) 
+        when :D
+            move!(pos,0,-1)
+    end 
+end
+
+def update_tail!(tail, head)
+    dx = head.x - tail.x
+    dy = head.y - tail.y
+    if dx.abs <= 1 && dy.abs <= 1
+        # touching do nothing
+    else # works if we only have to move 1 pixel at a time
+        tail.x += sign(dx)
+        tail.y += sign(dy)
     end
 end
 
-cmds.each do |cmd| 
-    puts cmd
-    move!(cmd, head)
-    puts head
+def run_command!(cmd, head, tail)
+    # run the command and see where the tail goes troughi
+
+    tail_pos = []
+
+    while cmd.steps > 0
+        move_dir!(cmd.dir, head)
+        update_tail!(tail,head)    
+        tail_pos.push(tail.dup) 
+        cmd.steps-=1
+    end    
+    tail_pos
 end
 
+def sign(x) x <=> 0 end
+def repr_cmd(cmd) "#{cmd.dir} #{cmd.steps}" end
+def repr_pos(pos) "(#{pos.x},#{pos.y})" end
+
+all_tail_positions = Set.new([tail])
+
+cmds.each do |cmd|
+    puts repr_cmd(cmd)
+    tails = run_command!(cmd, head, tail)
+    #puts repr_pos(head)
+    #puts tails.map{ |t| repr_pos(t) }.join(" ")
+    all_tail_positions += tails
+end
+
+ans1 = all_tail_positions.length
+ans2 = "TODO"
+
+puts "#{ans1},#{ans2}"
