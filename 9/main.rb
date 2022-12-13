@@ -1,5 +1,3 @@
-require "Set"
-
 Cmd = Struct.new(:dir, :steps)
 Pos = Struct.new(:x, :y)
 
@@ -7,9 +5,6 @@ cmds = File.readlines("input").map { |line|
     x  = line.strip.split
     Cmd.new(x[0].to_sym, x[1].to_i)
 }
-
-head = Pos.new(0,0)
-tail = Pos.new(0,0)
 
 def move!(pos, x, y)
     pos.x += x
@@ -33,7 +28,7 @@ def update_tail!(tail, head)
     dx = head.x - tail.x
     dy = head.y - tail.y
     if dx.abs <= 1 && dy.abs <= 1
-        # touching do nothing
+        # touching, do nothing
     else # works if we only have to move 1 pixel at a time
         tail.x += sign(dx)
         tail.y += sign(dy)
@@ -41,7 +36,7 @@ def update_tail!(tail, head)
 end
 
 def run_command!(cmd, head, tail)
-    # run the command and see where the tail goes troughi
+    # run the command and see where the tail goes through
 
     tail_pos = []
 
@@ -58,17 +53,17 @@ def sign(x) x <=> 0 end
 def repr_cmd(cmd) "#{cmd.dir} #{cmd.steps}" end
 def repr_pos(pos) "(#{pos.x},#{pos.y})" end
 
-all_tail_positions = Set.new([])
+head = Pos.new(0,0)
+tail = Pos.new(0,0)
 
-cmds.each do |cmd|
-    puts repr_cmd(cmd)
-    tails = run_command!(cmd, head, tail)
-    #puts repr_pos(head)
-    #puts tails.map{ |t| repr_pos(t) }.join(" ")
-    all_tail_positions += tails
-end
+path = cmds.map {|cmd|
+    # puts repr_cmd(cmd)
+    # puts repr_pos(head)
+    # puts tails.map{ |t| repr_pos(t) }.join(" ")}
+    run_command!(cmd, head, tail)
+}.flatten
 
-ans1 = all_tail_positions.length
+ans1 = path.uniq.length
 ans2 = "TODO"
 
 puts "#{ans1},#{ans2}"
