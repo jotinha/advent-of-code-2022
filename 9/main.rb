@@ -24,7 +24,7 @@ def move_dir!(dir, pos)
     end 
 end
 
-def update_tail!(tail, head)
+def pull!(tail, head)
     dx = head.x - tail.x
     dy = head.y - tail.y
     if dx.abs <= 1 && dy.abs <= 1
@@ -35,35 +35,23 @@ def update_tail!(tail, head)
     end
 end
 
-def run_command!(cmd, head, tail)
+def run_command!(cmd, knots)
     # run the command and see where the tail goes through
-
-    tail_pos = []
-
-    while cmd.steps > 0
-        move_dir!(cmd.dir, head)
-        update_tail!(tail,head)    
-        tail_pos.push(tail.dup) 
-        cmd.steps-=1
-    end    
-    tail_pos
+    (1..cmd.steps).map do |_|
+        move_dir!(cmd.dir, knots[0])
+        knots.each_cons(2) { |k1,k2| pull!(k2,k1) }
+        knots[-1].dup 
+    end 
 end
 
 def sign(x) x <=> 0 end
-def repr_cmd(cmd) "#{cmd.dir} #{cmd.steps}" end
-def repr_pos(pos) "(#{pos.x},#{pos.y})" end
 
-head = Pos.new(0,0)
-tail = Pos.new(0,0)
+def track_tail(cmds, n_knots)
+    knots = (1..n_knots).map{|x| Pos.new(0,0) }
+    cmds.map {|cmd| run_command!(cmd, knots)}.flatten
+end
 
-path = cmds.map {|cmd|
-    # puts repr_cmd(cmd)
-    # puts repr_pos(head)
-    # puts tails.map{ |t| repr_pos(t) }.join(" ")}
-    run_command!(cmd, head, tail)
-}.flatten
-
-ans1 = path.uniq.length
-ans2 = "TODO"
+ans1 = track_tail(cmds, 2).uniq.length
+ans2 = track_tail(cmds, 10).uniq.length
 
 puts "#{ans1},#{ans2}"
