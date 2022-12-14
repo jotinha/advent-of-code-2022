@@ -2,6 +2,7 @@ use strict;
 use warnings;
 
 open my $in,'<','input' or die "Could not open file";
+open my $img, '>', 'image.txt' or die "Could not open file";
 
 my $cycle = 1;
 my $x = 1;
@@ -18,12 +19,12 @@ sub step {
     }
     $cycle += 1;
     
-    print (pixelVisible ? "#" : ".");
+    print $img (pixelVisible ? "#" : ".");
     
     $col += 1;
     if (($col % 40) == 0) {
         $col = 0;
-        print "\n";
+        print $img "\n";
     }
 }
 
@@ -38,4 +39,8 @@ while (<$in>) {
         die "invalid"
     }
 }
-print "$strength\n"
+
+my $ans1 = $strength;
+my $ans2 = "RJERPEFC"; # hard coded but see image.txt file
+
+print "$ans1,$ans2\n"
