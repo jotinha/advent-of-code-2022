@@ -1,5 +1,5 @@
 const fs = require('fs');
-const data = fs.readFileSync('test','utf-8');
+const data = fs.readFileSync('input','utf-8');
 
 const pattern = /Monkey (\d+):\s+Starting items: (.*)\s+Operation: new = old ([-+*\/]) (\d+|old)\s+Test: divisible by (\d+)\s+If true: throw to monkey (\d+)\s+If false: throw to monkey (\d+)/gm
 
@@ -16,7 +16,8 @@ function makeMonkey(m, i) {
         by: parseInt(m[4]) || 'old',
         divisible: parseInt(m[5]),
         trueTo: parseInt(m[6]),
-        falseTo: parseInt(m[7])
+        falseTo: parseInt(m[7]),
+        inspected: 0
     }    
 }
 function updateWorry(old, operation, by) {
@@ -41,18 +42,26 @@ function round(monkeys) {
             newWorry = updateWorry(worry, m.operation, m.by);
             newWorry2 = Math.floor(newWorry/3);
             sendTo = newWorry2 % m.divisible == 0 ? m.trueTo : m.falseTo
-            console.log(`${worry}->${newWorry}->${newWorry2} to monkey ${sendTo}`);
+            //console.log(`${worry}->${newWorry}->${newWorry2} to monkey ${sendTo}`);
             monkeys[sendTo].items.push(newWorry2)
         })
+        m.inspected += m.items.length;
         m.items = [] // monkey sent everything
     })
     
 }
 
 function printItems(monkeys) {
-    monkeys.forEach((m,i) => console.log(`${i}: ${m.items}`))
+    monkeys.forEach((m,i) => console.log(`${i}: ${m.items} (inspected ${m.inspected} total)`))
 }
 
 let monkeys = [...data.matchAll(pattern)].map(makeMonkey)
-round(monkeys);
+
+for (let i=20; i--;) round(monkeys);
 printItems(monkeys)
+
+let [i1,i2] = monkeys.map(m => m.inspected).sort((a,b) => b-a); // sort desc
+
+let ans1 = i1*i2
+let ans2 = "TODO"
+console.log(`${ans1},${ans2}`);
