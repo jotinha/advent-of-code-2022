@@ -1,10 +1,20 @@
 const fs = require('fs');
 const data = fs.readFileSync('input','utf-8');
 
-const pattern = /Monkey (\d+):\s+Starting items: (.*)\s+Operation: new = old ([-+*\/]) (\d+|old)\s+Test: divisible by (\d+)\s+If true: throw to monkey (\d+)\s+If false: throw to monkey (\d+)/gm
+function initMonkeys(data) {
+    const pattern = /Monkey (\d+):\s+Starting items: (.*)\s+Operation: new = old ([-+*\/]) (\d+|old)\s+Test: divisible by (\d+)\s+If true: throw to monkey (\d+)\s+If false: throw to monkey (\d+)/gm
 
-function makeMonkey(m, i) {
-    idx = parseInt(m[1])
+    let monkeys = [...data.matchAll(pattern)].map(parseMonkey)
+    
+    // initialize rests array
+    let max_d = max(monkeys.map(m => m.divisible));
+    monkeys.forEach(m => m.items.forEach(item => {item.rests = computeRests(item.val, max_d)}))
+    
+    return monkeys
+}
+
+function parseMonkey(m, i) {
+    let idx = parseInt(m[1])
     if (idx != i) {
         throw(`Expected index ${i}, got ${idx}. This means an earlier monkey failed to match the regex`)
     }
@@ -20,70 +30,66 @@ function makeMonkey(m, i) {
         inspected: 0,
     }    
 }
-function updateWorry(old, operation, by, d) {
-    var n;
+
+function operate(a, operation, b) {
+    if (b == 'old') b = a;
     switch (operation) {
         case '*':
-            n = old * by;
-            break;
+            return a * b;
         case '+':
-            n = old + by;
-            break;
+            return a + b;
         default:
             throw(`Invalid operation: ${operation}`)
     }
-    if (!Number.isFinite(n) && d > 0)
-        throw {old, operation, by, n}
-    return n
-        
 }
+
 function computeRests(x, maxm) {
     return [...Array(maxm+1).keys()].map(m => x % m )
 }
 
-function isDivisible(item, d) {
-    return item.rests[d] == 0;
-}
-
 function round(monkeys, divideBy3) {
     monkeys.forEach(m => {
-        m.inspected += m.items.length;
         m.items.forEach(item => {
-            item.val = updateWorry(item.val, m.operation, m.by == 'old' ? item.val : m.by);
-            if (divideBy3)
+            item.val = operate(item.val, m.operation, m.by);
+           
+            // to avoid issues with large numbers we can simply keep operate on the rest values over all divisors
+            item.rests = item.rests.map((r,d) => operate(r, m.operation, m.by) % d)
+
+            var isDivisible
+            if (divideBy3) {
                 item.val = Math.floor(item.val/3);
+                isDivisible = item.val % m.divisible == 0
+            } else {
+                isDivisible = item.rests[m.divisible] == 0
+            }
             
-            // to avoid issues with large numbers we can simply keep all possible rest values
-            item.rests = item.rests.map((r,d) => 
-                updateWorry(r, m.operation, (m.by == 'old' ? r : m.by), d) % d)
-            
-            let sendTo = isDivisible(item, m.divisible) ? m.trueTo : m.falseTo
+            let sendTo = isDivisible ? m.trueTo : m.falseTo
             monkeys[sendTo].items.push(item)
+            m.inspected += 1;
         })
         m.items = [] // monkey sent everything
     })
     
 }
 
-function printItems(monkeys) {
-    monkeys.forEach((m,i) => console.log(`${i}: ${m.items.map(x => x.rests[m.divisible])} (inspected ${m.inspected} total)`))
-}
 
 function max(xs,n,key) {
     let s = [...xs].sort((a,b) => b-a)
     return n === undefined ? s[0] : s.slice(0,n);
 }
 
-let monkeys = [...data.matchAll(pattern)].map(makeMonkey)
-let max_d = max(monkeys.map(m => m.divisible));
-monkeys.forEach(m => m.items.forEach(item => {item.rests = computeRests(item.val, max_d)}))
-//console.log(JSON.stringify(monkeys, null, level=2))
+var monkeys, i1,i2 
 
-for (let i=10000; i--;) round(monkeys, false);
-printItems(monkeys)
-
-let [i1,i2] = max(monkeys.map(m => m.inspected),2)
-console.log(i1,i2)
+// do monkey business part I
+monkeys = initMonkeys(data); 
+for (let i=20; i--;) round(monkeys, true);
+[i1,i2] = max(monkeys.map(m => m.inspected),2)
 let ans1 = i1*i2;
-let ans2 = "TODO"
+
+// do monkey business part II
+monkeys = initMonkeys(data); 
+for (let i=10000; i--;) round(monkeys, false);
+[i1,i2] = max(monkeys.map(m => m.inspected),2)
+let ans2 = i1*i2;
+
 console.log(`${ans1},${ans2}`);
