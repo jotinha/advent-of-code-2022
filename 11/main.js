@@ -20,18 +20,25 @@ function makeMonkey(m, i) {
         inspected: 0,
     }    
 }
-function updateWorry(old, operation, by) {
+function updateWorry(old, operation, by, d) {
+    var n;
     switch (operation) {
         case '*':
-            return old * by;
+            n = old * by;
+            break;
         case '+':
-            return old + by;
+            n = old + by;
+            break;
         default:
             throw(`Invalid operation: ${operation}`)
     }
+    if (!Number.isFinite(n) && d > 0)
+        throw {old, operation, by, n}
+    return n
+        
 }
 function computeRests(x, maxm) {
-    return [...Array(maxm+1).keys()].map(m => x % m)
+    return [...Array(maxm+1).keys()].map(m => x % m )
 }
 
 function isDivisible(item, d) {
@@ -40,6 +47,7 @@ function isDivisible(item, d) {
 
 function round(monkeys, divideBy3) {
     monkeys.forEach(m => {
+        m.inspected += m.items.length;
         m.items.forEach(item => {
             item.val = updateWorry(item.val, m.operation, m.by == 'old' ? item.val : m.by);
             if (divideBy3)
@@ -47,30 +55,35 @@ function round(monkeys, divideBy3) {
             
             // to avoid issues with large numbers we can simply keep all possible rest values
             item.rests = item.rests.map((r,d) => 
-                updateWorry(r % d, m.operation, (m.by == 'old' ? r : m.by) % d) % d)
+                updateWorry(r, m.operation, (m.by == 'old' ? r : m.by), d) % d)
             
             let sendTo = isDivisible(item, m.divisible) ? m.trueTo : m.falseTo
             monkeys[sendTo].items.push(item)
         })
-        m.inspected += m.items.length;
         m.items = [] // monkey sent everything
     })
     
 }
 
 function printItems(monkeys) {
-    monkeys.forEach((m,i) => console.log(`${i}: ${m.items.map(x=>x.val)} ${m.items.map(x => x.rests[m.divisible])} (inspected ${m.inspected} total)`))
+    monkeys.forEach((m,i) => console.log(`${i}: ${m.items.map(x => x.rests[m.divisible])} (inspected ${m.inspected} total)`))
+}
+
+function max(xs,n,key) {
+    let s = [...xs].sort((a,b) => b-a)
+    return n === undefined ? s[0] : s.slice(0,n);
 }
 
 let monkeys = [...data.matchAll(pattern)].map(makeMonkey)
-let max_d = monkeys.map(m => m.divisible).sort().slice(-1)[0];
+let max_d = max(monkeys.map(m => m.divisible));
 monkeys.forEach(m => m.items.forEach(item => {item.rests = computeRests(item.val, max_d)}))
+//console.log(JSON.stringify(monkeys, null, level=2))
 
 for (let i=10000; i--;) round(monkeys, false);
 printItems(monkeys)
 
-let totals = monkeys.map(m => m.inspected).sort((a,b) => b-a); // sort desc
-console.log(totals)
-let ans1 = totals[0]*totals[1] 
+let [i1,i2] = max(monkeys.map(m => m.inspected),2)
+console.log(i1,i2)
+let ans1 = i1*i2;
 let ans2 = "TODO"
 console.log(`${ans1},${ans2}`);
