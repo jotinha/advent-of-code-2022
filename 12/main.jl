@@ -1,4 +1,4 @@
-lines = readlines("test")
+lines = readlines("input")
 hmap = transpose(hcat([[Int(x) for x = line] for line = lines]...))
 
 isend(c) = c == Int('E')
@@ -41,7 +41,7 @@ function findpath(hmap, start, end_)
         for b = neighbors(hmap, a)
             if notvisited(b)
                 parents[b] = a;
-                push!(q,b) # Depth first
+                pushfirst!(q,b) # Breadth first, push! for depth first
             end
         end
     end
