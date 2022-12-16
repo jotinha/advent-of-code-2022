@@ -1,4 +1,4 @@
-lines = readlines("input")
+lines = readlines("test")
 hmap = transpose(hcat([[Int(x) for x = line] for line = lines]...))
 
 isend(c) = c == Int('E')
@@ -31,32 +31,23 @@ function neighbors(hmap, a)
            [(-1,0),(1,0),(0,1),(0,-1)]))
 end
 
-function reconstructpath(parents, start, end_) 
-    path = [];
-    while end_ != start
-        push!(path, end_)        
-        end_ = parents[end_]
-    end
-    reverse(path)
-end
-
 function findpath(hmap, start, end_)
     q = [start]
-    visited = Set()
     parents = Dict()
-    while !isempty(q)
-        a = pop!(q)
-        if a == end_
-            return reconstructpath(parents, start, end_) 
-        end
+
+    notvisited(n) = !haskey(parents,n)
+
+    while (a = pop!(q)) != end_
         for b = neighbors(hmap, a)
-            if !in(b, visited)
+            if notvisited(b)
                 parents[b] = a;
-                push!(visited,b)
                 push!(q,b) # Depth first
             end
         end
-   end
+    end
+    
+    path(a, b) = a == b ? [] : [path(a, parents[b]); b] # reconstruct path
+    path(start, end_) 
 end
 
 
@@ -69,5 +60,4 @@ map(println∘fmt,path)
 ans1 = length(path)
 ans2 = "TODO"
 println("$ans1,$ans2")
-
 
