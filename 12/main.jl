@@ -25,20 +25,20 @@ function canjump(hmap,from,to)
     end
 end
 
-function neighbors(hmap, a)
-    return filter(ij -> canjump(hmap, a, ij),
+function neighbors(hmap, a, dir)
+    return filter(ij -> dir == "fwd" ? canjump(hmap, a, ij) : canjump(hmap, ij, a),
            map(ij -> a + CartesianIndex(ij),
            [(-1,0),(1,0),(0,1),(0,-1)]))
 end
 
-function findpath(hmap, start, end_)
+function findpath(hmap, start, endcond; dir = "fwd")
     q = [start]
     parents = Dict()
 
     notvisited(n) = !haskey(parents,n)
-
-    while (a = pop!(q)) != end_
-        for b = neighbors(hmap, a)
+  
+    while !endcond(local a = pop!(q))
+        for b = neighbors(hmap, a, dir)
             if notvisited(b)
                 parents[b] = a;
                 pushfirst!(q,b) # Breadth first, push! for depth first
@@ -47,17 +47,18 @@ function findpath(hmap, start, end_)
     end
     
     path(a, b) = a == b ? [] : [path(a, parents[b]); b] # reconstruct path
-    path(start, end_) 
+    path(start, a) 
 end
 
 
-path = findpath(hmap, startpos, endpos)
+path1 = findpath(hmap, startpos, ij -> isend(hmap[ij]))
+path2 = findpath(hmap, endpos, ij -> hmap[ij] == Int('a'), dir="bwd")
 
 fmt(ij:: CartesianIndex) = "($(ij[1]),$(ij[2]))"
-println(fmt(startpos),"->",fmt(endpos))
-map(println∘fmt,path)
+#println(fmt(startpos),"->",fmt(endpos))
+#map(println∘fmt,path1)
 
-ans1 = length(path)
-ans2 = "TODO"
+ans1 = length(path1)
+ans2 = length(path2) 
 println("$ans1,$ans2")
 
