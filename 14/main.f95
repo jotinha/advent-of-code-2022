@@ -1,23 +1,28 @@
 program hello
     implicit none
     integer :: world(1024,256) 
-    integer :: ans1
-    call buildworld(world)
+    integer :: ans1,jfloor
+
+    call buildworld(world, jfloor)
+    
     ans1 = simulate(world, 500,0)
     call draw(transpose(world))
-    
-    print *,ans1
+  
+     
+    print *, jfloor
 contains
-    subroutine buildworld(world)
+    subroutine buildworld(world, jfloor)
         implicit none
         integer, intent(inout) :: world(:,:)
+        integer, intent(out) :: jfloor
         character (len=2048) :: line
         integer :: io
         integer :: points(2048)
         integer :: n,i 
         
         world = 0
-        open(1, file='input', status='old', action='read')
+        jfloor = 0
+        open(1, file='test', status='old', action='read')
         do
             read(1,"(A)",iostat=io) line
             if (io/= 0) exit
@@ -25,11 +30,12 @@ contains
             do i=1,(n-1)*2,2
                 call fillline(world,points(i:i+1),points(i+2:i+3))
                 !print *,points(i),points(i+2),points(i+1),points(i+3)
-                 
+                jfloor = max(jfloor, points(i+1),points(i+3))
             end do
             !print *, n, points(:n*2)
         end do
         close(1)
+        jfloor = jfloor + 2
     end subroutine 
 
     recursive function parse(line, points) result(n)
