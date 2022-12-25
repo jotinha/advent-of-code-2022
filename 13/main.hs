@@ -2,6 +2,7 @@ import Data.Maybe
 import Text.Read
 import Text.Printf
 import Data.List
+import Data.Char
 
 data Packet = Num Int | List [Packet] deriving (Show, Eq)
 
@@ -22,30 +23,24 @@ pairs [] = []
 inner = init.tail
 
 parse :: String -> Packet
-parse "" = List []
-parse s@('[':_) = List [parse x | x <- (elems.inner) s] 
-parse s = Num $ justParseInt s
+parse s = x where (_,x) = parseNext s
 
-findclosing s = take i s
-    where
-        findi 0 idx (']':xs) = idx+1
-        findi l idx (']':xs) = findi (l-1) (idx+1) xs
-        findi l idx ('[':xs) = findi (l+1) (idx+1) xs
-        findi l idx (_:xs) = findi l (idx+1) xs
-        findi 0 idx [] = idx
-        i = findi 0 0 s
+parseNext :: String -> (String, Packet)
+parseNext "" = ("", List []) 
+parseNext ('[':s) = (rest, List x) where (rest,x) = parseList s
+parseNext (',':s) = parseNext s --skip
+parseNext s = parseNumber s
 
-findcomma s = takeWhile (/=',') s
+parseNumber s = (rest, x')
+    where x = takeWhile isDigit s
+          x' = Num $ justParseInt x
+          rest = drop (length x) s
 
-nextelem :: String -> String        
-nextelem ('[':xs) = '[':findclosing xs
-nextelem xs = findcomma xs
-
-elems' :: [String] -> String -> [String]
-elems' acc "" = acc
-elems' acc s = elems' (x:acc) $ drop (length x+1) s
-    where x = nextelem s
-elems s = reverse $ elems' [] s
+parseList :: String -> (String,[Packet])
+parseList (']':rest) = (rest, [])
+parseList s = (rest', x:xs)
+    where (rest, x) = parseNext s
+          (rest',xs) = parseList rest
 
 tolist :: Packet -> Packet
 tolist (Num x) = List [Num x]
