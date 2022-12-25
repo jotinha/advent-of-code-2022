@@ -1,6 +1,6 @@
 program hello
     implicit none
-    integer :: world(520,170) 
+    integer :: world(1024,256) 
     integer :: ans1
     call buildworld(world)
     ans1 = simulate(world, 500,0)
@@ -11,23 +11,22 @@ contains
     subroutine buildworld(world)
         implicit none
         integer, intent(inout) :: world(:,:)
-        character (len=512) :: line
+        character (len=2048) :: line
         integer :: io
-        integer :: points(256)
+        integer :: points(2048)
         integer :: n,i 
         
         world = 0
-        open(1, file='test', status='old', action='read')
+        open(1, file='input', status='old', action='read')
         do
             read(1,"(A)",iostat=io) line
             if (io/= 0) exit
             n = parse(line, points) 
-            do i=1,n+1,2
+            do i=1,(n-1)*2,2
                 call fillline(world,points(i:i+1),points(i+2:i+3))
                 !print *,points(i),points(i+2),points(i+1),points(i+3)
                  
             end do
-            !print *,"next"
             !print *, n, points(:n*2)
         end do
         close(1)
@@ -46,7 +45,7 @@ contains
         if (i==0) return 
 
         line = line(i+4:)    
-        n = 1 + parse(line, points(3:))
+        n = n + parse(line, points(3:))
     
     end function
 
