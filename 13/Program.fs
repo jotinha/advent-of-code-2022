@@ -1,9 +1,9 @@
 ﻿
 type Packet = Num of int | List of list<Packet>
 
-let lines = System.IO.File.ReadAllLines("input") |> Array.toList
 let toString cs = System.String.Concat(Array.ofList(cs: list<char>))
 let toChars = Seq.toList
+let skipEveryNth n xs = [for (i,x) in (List.indexed xs) do if i%n<(n-1) then yield x]
 
 let parseNumber s = 
     let x = List.takeWhile System.Char.IsDigit s
@@ -45,18 +45,21 @@ let solve1 packets =
     List.sum [for (i,x) in (List.indexed packetpairs) do 
         if correctorder x then 
             yield i+1]
-        
-let inner str = str |> List.tail |> List.rev |> List.tail |> List.rev 
-let skipEveryNth n xs = [for (i,x) in (List.indexed xs) do if i%n<(n-1) then yield x]
+
+let dividers = ["[[2]]"; "[[6]]"] |> List.map (toChars >> parse)
+let isdivider p = List.contains p dividers
+let sortpackets = List.sortWith (fun a b -> order (a,b))
+
+let solve2 packets = 
+    let packets' = sortpackets (List.append packets dividers)
+    let i1::i2::_ = [for (i,x) in List.indexed packets' do
+        if isdivider x then
+            yield i+1]
+    i1*i2
+ 
+let lines = System.IO.File.ReadAllLines("input") |> Array.toList
 let packets = List.map (toChars >> parse) (skipEveryNth 3 lines) 
 
-
-let printChars s = List.append s ['\n'] |> List.map (fun a -> printf "%c" a)
-let rec printPacket = function 
-    | Num x -> printf "%d " x 
-    | List xs -> printf("["); List.map printPacket xs; printf("\b] ")
-
-//packets |> List.last |> printPacket 
 let ans1 = solve1 packets
-let ans2 = 0
-printf "%d,%d" ans1 ans2
+let ans2 = solve2 packets 
+printfn "%d,%d" ans1 ans2
