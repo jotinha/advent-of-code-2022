@@ -6,7 +6,7 @@ program hello
     call buildworld(world, jfloor)
     
     ans1 = simulate(world, 500,0)
-    call draw(transpose(world))
+    call draw(world)
   
     world(:,jfloor) = 1
     ans2 = ans1 + simulate(world,500,0) + 1 !pick up where we left off  
@@ -14,7 +14,7 @@ program hello
 
     print '(2(i0:","))', ans1,ans2
 
-    call draw(transpose(world))
+    call draw(world)
 contains
     subroutine buildworld(world, jfloor)
         implicit none
@@ -76,33 +76,20 @@ contains
     subroutine draw(world)
         implicit none
         integer, dimension(:,:), intent(in) :: world
-        integer :: i,j
+        character, dimension(size(world,1),size(world,2)) :: pixels
+        integer :: i
 
-        open(2, file="world", action="write")
-        do i = 1,size(world,1)
-            do j=1,size(world,2)
-                write(2,fmt='(1a)', advance="no") pict(world(i,j)) 
-            end do
-            write (2,*) ""
+        pixels = '?'
+        where (world == 0) pixels = '.'
+        where (world == 1) pixels = '#'
+        where (world == 2) pixels = 'o'
+        
+        open(2, file="image.txt", action="write")
+        do i = 1,size(world,2) ! we'll be writing it transposed
+            write(2,fmt='(*(a))') pixels(:,i) 
         end do
         close(2)
     end subroutine
-
-    character function pict(pixel)
-        implicit none
-        integer, intent(in) :: pixel        
-
-        select case (pixel)
-            case (0) 
-                pict = '.'
-            case (1) 
-                pict = '#'
-            case (2) 
-                pict = 'o'
-            case default
-                pict = '?'
-        end select 
-    end function pict
 
     recursive function fall(world, i, j) result(cont)
         implicit none
