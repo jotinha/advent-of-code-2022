@@ -1,15 +1,20 @@
 program hello
     implicit none
     integer :: world(1024,256) 
-    integer :: ans1,jfloor
+    integer :: ans1,ans2,jfloor
 
     call buildworld(world, jfloor)
     
     ans1 = simulate(world, 500,0)
     call draw(transpose(world))
   
-     
-    print *, jfloor
+    world(:,jfloor) = 1
+    ans2 = ans1 + simulate(world,500,0) + 1 !pick up where we left off  
+    !+1 because we need to count the one at the origin
+
+    print '(2(i0:","))', ans1,ans2
+
+    call draw(transpose(world))
 contains
     subroutine buildworld(world, jfloor)
         implicit none
@@ -22,7 +27,7 @@ contains
         
         world = 0
         jfloor = 0
-        open(1, file='test', status='old', action='read')
+        open(1, file='input', status='old', action='read')
         do
             read(1,"(A)",iostat=io) line
             if (io/= 0) exit
@@ -99,25 +104,26 @@ contains
         end select 
     end function pict
 
-    recursive function fall(world, i, j) result(rest)
+    recursive function fall(world, i, j) result(cont)
         implicit none
         integer, intent(inout) :: world(:,:)
         integer, intent(in) :: i, j ! sand position
-        logical :: rest ! true if in rest, false if it reached void 
+        logical :: cont ! true if in rest, false if it reached void 
       
         if ((j+1) > size(world,2)) then
-            rest = .FALSE. !void 
+            cont = .FALSE. !void 
             !print *,"fell down in void at", i,j
         elseif (world(i,j+1) == 0) then
-            rest = fall(world,i,j+1) ! fall down 
+            cont = fall(world,i,j+1) ! fall down 
         elseif (world(i-1,j+1) == 0) then
-            rest = fall(world,i-1,j+1) ! fall down left
+            cont = fall(world,i-1,j+1) ! fall down left
         elseif (world(i+1,j+1) == 0) then
-            rest = fall(world,i+1,j+1) ! fall down right
-        else 
-            world(i,j) = 2 ! at rest
-            rest = .TRUE.
-            !print *,"rest at",i,j
+            cont = fall(world,i+1,j+1) ! fall down right
+        elseif (j==0) then ! we have no where else to go and we're at the start
+            cont = .FALSE.
+        else ! at rest
+            cont = .TRUE.
+            world(i,j) = 2
         end if
 
     end function 
