@@ -1,13 +1,17 @@
 program hello
     implicit none
-    integer :: world(520,10) 
+    integer :: world(520,170) 
+    integer :: ans1
     call buildworld(world)
-
+    ans1 = simulate(world, 500,0)
+    call draw(transpose(world))
+    
+    print *,ans1
 contains
     subroutine buildworld(world)
         implicit none
         integer, intent(inout) :: world(:,:)
-        character (len=128) :: line
+        character (len=512) :: line
         integer :: io
         integer :: points(256)
         integer :: n,i 
@@ -15,7 +19,7 @@ contains
         world = 0
         open(1, file='test', status='old', action='read')
         do
-            read(1,"(A70)",iostat=io) line
+            read(1,"(A)",iostat=io) line
             if (io/= 0) exit
             n = parse(line, points) 
             do i=1,n+1,2
@@ -26,7 +30,6 @@ contains
             !print *,"next"
             !print *, n, points(:n*2)
         end do
-        call draw(transpose(world))
         close(1)
     end subroutine 
 
@@ -85,10 +88,44 @@ contains
             case (1) 
                 pict = '#'
             case (2) 
-                pict = '@'
+                pict = 'o'
             case default
                 pict = '?'
         end select 
     end function pict
-    
+
+    recursive function fall(world, i, j) result(rest)
+        implicit none
+        integer, intent(inout) :: world(:,:)
+        integer, intent(in) :: i, j ! sand position
+        logical :: rest ! true if in rest, false if it reached void 
+      
+        if ((j+1) > size(world,2)) then
+            rest = .FALSE. !void 
+            !print *,"fell down in void at", i,j
+        elseif (world(i,j+1) == 0) then
+            rest = fall(world,i,j+1) ! fall down 
+        elseif (world(i-1,j+1) == 0) then
+            rest = fall(world,i-1,j+1) ! fall down left
+        elseif (world(i+1,j+1) == 0) then
+            rest = fall(world,i+1,j+1) ! fall down right
+        else 
+            world(i,j) = 2 ! at rest
+            rest = .TRUE.
+            !print *,"rest at",i,j
+        end if
+
+    end function 
+
+    integer function simulate(world,starti,startj)
+        implicit none
+        integer, intent(inout) :: world(:,:)
+        integer, intent(in) :: starti,startj
+        
+        simulate = 0 
+        do while (fall(world,starti,startj)) 
+            simulate = simulate + 1
+        end do
+        
+    end function 
 end program
