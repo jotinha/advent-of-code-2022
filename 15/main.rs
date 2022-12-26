@@ -1,4 +1,6 @@
 use std::fs;
+use std::collections::HashSet;
+use std::iter::FromIterator;
 
 struct Point {x:i32,y:i32}
 struct Sensor {pos: Point, beacon: Point, coverage: i32 } 
@@ -43,7 +45,19 @@ fn getxrange(y: i32, sensors: &Vec<Sensor>) -> Vec<Point> {
     let xmin = sensors.iter().map(|s| s.pos.x - s.coverage).min().unwrap();
     let xmax = sensors.iter().map(|s| s.pos.x + s.coverage).max().unwrap();
     (xmin-1..xmax+1).map(|x| Point {x:x,y:y}).collect()
+}
 
+fn coveredxrange(y: i32, sensor: &Sensor) ->  std::ops::Range<i32> {
+    let dx = sensor.coverage - (sensor.pos.y-y).abs(); 
+    (sensor.pos.x-dx)..(sensor.pos.x+dx+1)
+}
+
+fn coveredxrangeAll(y:i32, sensors: &Vec<Sensor>) -> HashSet<i32> {
+    let mut points = HashSet::new();
+    for sensor in sensors {
+       points.extend(coveredxrange(y,&sensor))
+    }
+    points
 }
 
 fn main() {
@@ -52,9 +66,9 @@ fn main() {
     let sensors:Vec<Sensor> = lines.into_iter().map(parse).collect();
     
     let y = 2000000;
-    let ans1 = getxrange(y,&sensors)
+    let ans1 = coveredxrangeAll(y,&sensors)
         .iter()
-        .filter(|p| iscoveredbyany(p,&sensors))
+        .map(|x| Point {x:*x,y:y})
         .filter(|p| !beaconat(p,&sensors))
         .count();
     println!("{},{}",ans1,"TODO");
