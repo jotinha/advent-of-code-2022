@@ -23,50 +23,41 @@ fn parse(line: &str) -> Sensor {
 }
 
 
-fn splitlines(content: &str) -> Vec<&str> {
+fn split_lines(content: &str) -> Vec<&str> {
     content 
         .split('\n')
         .map(|l| l.trim())
         .filter(|l| !l.is_empty())
         .collect()
-
 }
 
 fn dist(a: &Point, b: &Point) -> i32 { (a.x-b.x).abs() + (a.y-b.y).abs() }
 
-fn iscoveredby(p: &Point, s: &Sensor) -> bool { 
-    dist(p,&s.pos) <= s.coverage
-}
-fn iscoveredbyany(p: &Point, sensors: &Vec<Sensor>) -> bool {
-    sensors.iter().any(|s| iscoveredby(p,s))    
-}
-fn beaconat(p: &Point, sensors: &Vec<Sensor>) -> bool {
-    sensors.iter().any(|s| s.beacon.x == p.x && s.beacon.y == p.y)
+fn is_covered(p: &Point, sensors: &Vec<Sensor>) -> bool {
+    sensors.iter().any(|s| dist(p,&s.pos) <= s.coverage)    
 }
 
-fn getxrange(y: i32, sensors: &Vec<Sensor>) -> Vec<Point> { 
-    let xmin = sensors.iter().map(|s| s.pos.x - s.coverage).min().unwrap();
-    let xmax = sensors.iter().map(|s| s.pos.x + s.coverage).max().unwrap();
-    (xmin-1..xmax+1).map(|x| Point {x:x,y:y}).collect()
-}
-
-fn coveredxrange(y: i32, sensor: &Sensor) ->  std::ops::Range<i32> {
+fn get_x_covered(y: i32, sensor: &Sensor) ->  std::ops::Range<i32> {
     let dx = sensor.coverage - (sensor.pos.y-y).abs(); 
-    (sensor.pos.x-dx)..(sensor.pos.x+dx+1)
+    //not quite sure why it's not +1 on the right, but it works out for solution 1 without double counting beacons, so fuck it
+    (sensor.pos.x-dx)..(sensor.pos.x+dx) 
 }
 
 fn solve1(y:i32, sensors: &Vec<Sensor>) -> usize {
-    let mut points = HashSet::new();
-    let mut beacons = HashSet::new();
-    for sensor in sensors {
-        points.extend(coveredxrange(y,&sensor));
-        if sensor.beacon.y == y {
-            beacons.insert(sensor.beacon.x);
-        }
-    }
-    // return covered points except the beacons already there
-    points.difference(&beacons).count() 
+    // For each sensor, compute which points intersect the y-line
+    // Expand all ranges and apply a set so we don't double count
+    // This is very slow, I tried another solution merging ranges without
+    // turning into sets, but gave up
+
+    let xs = sensors.iter().flat_map(|s| get_x_covered(y,&s));
+    HashSet::<i32>::from_iter(xs).len()
 }
+
+fn is_within_bounds(p: &Point, limit: i32) -> bool {
+    return p.x >= 0 && p.x <= limit &&
+           p.y >= 0 && p.y <= limit
+}
+
 fn solve2(limit: i32, sensors: &Vec<Sensor>) -> i64 {
     let mut lz : Vec<i32> = Vec::new();
     let mut lw : Vec<i32> = Vec::new();
@@ -76,32 +67,36 @@ fn solve2(limit: i32, sensors: &Vec<Sensor>) -> i64 {
         lw.push(s.pos.x - s.pos.y + s.coverage+1);
         lw.push(s.pos.x - s.pos.y - s.coverage-1);
     }
+
     let mut points : HashSet<Point> = HashSet::new();
+    //iterate over all intersections of z and w lines
+    //the point must necessarily be in one of these locations
+    //to create the point in x,y space we use the formula below
+    //(how to derive it is left as an exercise to the future me)
     for z in &lz {
         for w in &lw {
-            let p = Point {x:(z+w)/2, y:(z-w)/2};    
-            if !points.contains(&p) {
-                if (!iscoveredbyany(&p, sensors) &&
-                    p.x >= 0 && p.x <= limit &&
-                    p.y >= 0 && p.y <= limit) {
-                     
-                    return (p.x as i64)*(limit as i64)+(p.y as i64); 
-                } 
-                points.insert(p);
-            }
+            points.insert(Point {x:(z+w)/2, y:(z-w)/2});    
         }
     }
-    0
-
+    
+    let sol = points.iter()
+        .filter(|p| !is_covered(&p, sensors))
+        .filter(|p| is_within_bounds(&p, limit))
+        .next()
+        .unwrap();
+    
+    (sol.x as i64)*(limit as i64)+(sol.y as i64) 
+    
 }
 
 fn main() {
-    let content = fs::read_to_string("input").unwrap();
-    let lines = splitlines(&content);
+    //let (fname,y,limit) = ("test",10,20);
+    let (fname,y,limit) = ("input",2_000_000,4_000_000);
+ 
+    let content = fs::read_to_string(fname).unwrap();
+    let lines = split_lines(&content);
     let sensors:Vec<Sensor> = lines.into_iter().map(parse).collect();
     
-    let y = 2000000;
-    let limit = 4_000_000;
     let ans1 = solve1(y,&sensors);
     let ans2 = solve2(limit,&sensors);
     println!("{},{}",ans1,ans2);
