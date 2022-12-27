@@ -3,7 +3,9 @@ use std::collections::HashSet;
 use std::iter::FromIterator;
 use std::ops::Range;
 
+#[derive(Eq, Hash, PartialEq)]
 struct Point {x:i32,y:i32}
+
 struct Sensor {pos: Point, beacon: Point, coverage: i32 } 
 
 fn parse(line: &str) -> Sensor {
@@ -65,6 +67,33 @@ fn solve1(y:i32, sensors: &Vec<Sensor>) -> usize {
     // return covered points except the beacons already there
     points.difference(&beacons).count() 
 }
+fn solve2(limit: i32, sensors: &Vec<Sensor>) -> i64 {
+    let mut lz : Vec<i32> = Vec::new();
+    let mut lw : Vec<i32> = Vec::new();
+    for s in sensors {
+        lz.push(s.pos.x + s.pos.y + s.coverage+1);
+        lz.push(s.pos.x + s.pos.y - s.coverage-1);
+        lw.push(s.pos.x - s.pos.y + s.coverage+1);
+        lw.push(s.pos.x - s.pos.y - s.coverage-1);
+    }
+    let mut points : HashSet<Point> = HashSet::new();
+    for z in &lz {
+        for w in &lw {
+            let p = Point {x:(z+w)/2, y:(z-w)/2};    
+            if !points.contains(&p) {
+                if (!iscoveredbyany(&p, sensors) &&
+                    p.x >= 0 && p.x <= limit &&
+                    p.y >= 0 && p.y <= limit) {
+                     
+                    return (p.x as i64)*(limit as i64)+(p.y as i64); 
+                } 
+                points.insert(p);
+            }
+        }
+    }
+    0
+
+}
 
 fn main() {
     let content = fs::read_to_string("input").unwrap();
@@ -72,7 +101,8 @@ fn main() {
     let sensors:Vec<Sensor> = lines.into_iter().map(parse).collect();
     
     let y = 2000000;
+    let limit = 4_000_000;
     let ans1 = solve1(y,&sensors);
-    
-    println!("{},{}",ans1,"TODO");
+    let ans2 = solve2(limit,&sensors);
+    println!("{},{}",ans1,ans2);
 }
