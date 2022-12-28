@@ -2,6 +2,8 @@ use std::fs;
 use std::collections::HashSet;
 use std::iter::FromIterator;
 use std::ops::Range;
+use std::cmp::min;
+use std::cmp::max;
 
 #[derive(Eq, Hash, PartialEq)]
 struct Point {x:i32,y:i32}
@@ -37,21 +39,41 @@ fn is_covered(p: &Point, sensors: &Vec<Sensor>) -> bool {
     sensors.iter().any(|s| dist(p,&s.pos) <= s.coverage)    
 }
 
-fn get_x_covered(y: i32, sensor: &Sensor) ->  std::ops::Range<i32> {
+fn get_x_covered(y: i32, sensor: &Sensor) ->  Range<i32> {
     let dx = sensor.coverage - (sensor.pos.y-y).abs(); 
     //not quite sure why it's not +1 on the right, but it works out for solution 1 without double counting beacons, so fuck it
     (sensor.pos.x-dx)..(sensor.pos.x+dx) 
 }
 
 fn solve1(y:i32, sensors: &Vec<Sensor>) -> usize {
-    // For each sensor, compute which points intersect the y-line
-    // Expand all ranges and apply a set so we don't double count
-    // This is very slow, I tried another solution merging ranges without
-    // turning into sets, but gave up
-
-    let xs = sensors.iter().flat_map(|s| get_x_covered(y,&s));
-    HashSet::<i32>::from_iter(xs).len()
+    let minx : i32 = sensors.iter().map(|s| s.pos.x - s.coverage).min().unwrap();
+    let maxx : i32 = sensors.iter().map(|s| s.pos.x + s.coverage).max().unwrap();
+    //println!("{}->{}",minx,maxx);
+    let initial_range = minx..maxx+1; 
+    count_occupied_at(y, &initial_range, sensors)
 }
+
+fn count_occupied_at(y:i32, space: &Range<i32>, sensors: &[Sensor]) -> usize {
+    if space.len() <= 0 {
+        return 0;
+    }
+    if let [s, rest@..] = &sensors[..] {
+        let cover = get_x_covered(y, s);
+        if cover.len() > 0 {
+            let intersect = max(cover.start,space.start)..min(cover.end,space.end); 
+            let left = space.start..min(cover.start,space.end);
+            let right = max(cover.end,space.start)..space.end;
+            //println!("{:?} ->{:?}->{:?} {:?} {:?}", space,cover, intersect, left, right);
+            return intersect.len() + count_occupied_at(y, &left, rest) + count_occupied_at(y, &right, rest)
+        } else {
+            return count_occupied_at(y, space, rest)
+        }
+    } else {
+       return 0
+    }
+}   
+
+
 
 fn is_within_bounds(p: &Point, limit: i32) -> bool {
     return p.x >= 0 && p.x <= limit &&
