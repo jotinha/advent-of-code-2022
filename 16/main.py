@@ -48,6 +48,15 @@ def min_distance(s,e):
             if v not in visited:
                 q.put(p+[v])
 
+
+def compute_flow_ideal(nodes, time):
+    total = 0
+    for node in nodes:
+        time = time-2
+        if time <= 0: break
+        total = total + node.flow*time
+    return total
+    
     
 def compute_flow_up_to(nodes):
     nodes = list(nodes)
@@ -89,19 +98,30 @@ class State:
         tuple(self.unseen)
         ))
 
+        lower_bound = self.compute_pressure_left_at_rate(self.rate)
+        upper_bound = lower_bound + compute_flow_ideal(
+            sorted(self.unseen, key= lambda x: x.flow, reverse=True), self.time_left)
+        
+        self.estimates = (self.pressure_relieved + lower_bound, self.pressure_relieved + upper_bound)
+        
     def __hash__(self) -> int:        
         return self._h
 
-def estimate_upper_bound(s: State):
-    max_flow_left = sum(sorted((v.flow for v in s.unseen), reverse=True)[:s.time_left//2])
-    return s.pressure_relieved + \
-            (s.rate + max_flow_left)*s.time_left
-       
+    def compute_pressure_left_at_rate(self, rate):
+        return rate*self.time_left
+
+    def __lt__(self, other):
+        return self.priority < other.priority
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
 
 def find_max_reward_path_2(start):
     valves_with_flow = set(v for v in valves.values() if v.flow > 0)
     best = 0
     q = LifoQueue() # DFS
+    #q = PriorityQueue() 
+    #q = LifoQueue() # BFS
 
     q.put(State(0, 0, 30, start, [], valves_with_flow))
 
@@ -119,7 +139,7 @@ def find_max_reward_path_2(start):
         if s.time_left == 0:
             continue
         
-        if estimate_upper_bound(s) < best:
+        if s.estimates[1] <= best:
             continue
         
         for v in s.unseen:
