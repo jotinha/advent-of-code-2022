@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from functools import lru_cache, partial
-from itertools import permutations
+from itertools import combinations, permutations
 from math import factorial
 from multiprocessing import SimpleQueue
 from queue import LifoQueue, PriorityQueue
@@ -49,10 +49,17 @@ def min_distance(s,e):
                 q.put(p+[v])
 
 
-def compute_flow_ideal(nodes, time):
+@lru_cache
+def global_min_distance(nodes):
+    return min(min_distance(a,b) for a,b in combinations(nodes,2))
+
+def compute_flow_upper_bound(nodes, time):
+    nodes = sorted(nodes, key= lambda x: x.flow, reverse=True)
+    dt = global_min_distance(tuple(nodes)) + 1
+
     total = 0
     for node in nodes:
-        time = time-2
+        time = time-dt
         if time <= 0: break
         total = total + node.flow*time
     return total
@@ -77,12 +84,6 @@ def compute_flow(nodes):
     total, time, rate = compute_flow_up_to(nodes)
     return total + time*rate
 
-def compute_flow_upperbound(nodes, other_valves):
-    total, time, rate = compute_flow_up_to(nodes)
-    potential_rate = sorted(v.flow for v in other_valves)
-    return total + time*(rate+sum(potential_rate[:time//2]))
-
-
 @dataclass
 class State:
     pressure_relieved : int
@@ -98,27 +99,19 @@ class State:
         tuple(self.unseen)
         ))
 
-        lower_bound = self.compute_pressure_left_at_rate(self.rate)
-        upper_bound = lower_bound + compute_flow_ideal(
-            sorted(self.unseen, key= lambda x: x.flow, reverse=True), self.time_left)
-        
+        lower_bound = self.rate*self.time_left
+        upper_bound = lower_bound + compute_flow_upper_bound(self.unseen, self.time_left)
+       
         self.estimates = (self.pressure_relieved + lower_bound, self.pressure_relieved + upper_bound)
         
     def __hash__(self) -> int:        
         return self._h
 
-    def compute_pressure_left_at_rate(self, rate):
-        return rate*self.time_left
 
-    def __lt__(self, other):
-        return self.priority < other.priority
-
-    def __eq__(self, other):
-        return hash(self) == hash(other)
-
-def find_max_reward_path_2(start):
+def find_max_reward_path(start):
     valves_with_flow = set(v for v in valves.values() if v.flow > 0)
     best = 0
+    
     q = LifoQueue() # DFS
     #q = PriorityQueue() 
     #q = LifoQueue() # BFS
@@ -147,7 +140,7 @@ def find_max_reward_path_2(start):
             if sn not in seen_paths:
                 seen_paths.add(sn)
                 q.put(sn)
-
+    print("total iterations: ", it)
     return best
 
 def next_state(state: State, node: Valve) -> State:
@@ -161,42 +154,9 @@ def next_state(state: State, node: Valve) -> State:
                     state.rate + node.flow, state.time_left - dt,
                     node,state.path + [node], state.unseen - {node}) 
 
-def find_max_reward_path(start):
-    valves_with_flow = [v for v in valves.values() if v.flow > 0]
-    best_flow = 0
-    
-    #q = SimpleQueue() # BFS
-    #q = LifoQueue() # DFS
-    q = PriorityQueue()
-    q.put((0,0,[start]))
-    
-    from tqdm import trange
-    for it in range(10_000_000):
-        if (it%10_000 == 0 and it > 0):
-            print(it, q.qsize(),best_flow, p)
-        if q.empty(): break
-        priority,_,p = q.get()
-        flow_ub = -priority
-        
-        if flow_ub < best_flow:
-            continue
-
-        flow = compute_flow(p)
-        if flow > best_flow:
-            best_flow = flow
-            print(it, q.qsize(), best_flow, p)
-        
-        other_valves = set(v for v in valves_with_flow if v not in p)
-        for n in other_valves:
-            pp = p + [n]
-            q.put((-compute_flow_upperbound(pp, other_valves - {n}), random(), pp))
-    return best_flow        
-
-    #return max(map(compute_flow,([start,*rest] for rest in permutations(valves_with_flow))))
-
 
 valves = load("input")
-print(find_max_reward_path_2(valves["AA"]))
+print(find_max_reward_path(valves["AA"]))
 
 #test_path = get_valves(c+c for c in "ADBJHEC")
 #test_path_2 = get_valves(c+c for c in "ABJDHFEC")
