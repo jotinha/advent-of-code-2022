@@ -51,6 +51,7 @@ def min_distance(s,e):
 
 @lru_cache
 def global_min_distance(nodes):
+    if len(nodes) <= 1: return 0
     return min(min_distance(a,b) for a,b in combinations(nodes,2))
 
 def compute_flow_upper_bound(nodes, time):
@@ -125,8 +126,8 @@ def find_max_reward_path(start):
         it += 1
         s : State = q.get()
         
-        if s.pressure_relieved > best:
-            best = s.pressure_relieved
+        if s.estimates[0] > best:
+            best = s.estimates[0]
             print(it, q.qsize(), best)
 
         if s.time_left == 0:
