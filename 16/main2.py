@@ -102,10 +102,23 @@ def compute_solutions(dists,flow_rates, time):
     print(it, "iterations")
     return solutions
 
+def solve2(dists, rates):
+    # basically the two agents are independent because they open different valves.
+    # Compute solution for single agent with 26 minutes then just take the max
+    # possible sum of the two pressures achieved independently by the agents
+    solutions = compute_solutions(dists, rates, 26)
+    return max(solutions[s1] + solutions[s2]
+        for s1,s2 in combinations(solutions, 2)
+            if s1.isdisjoint(s2)
+    )
+    
+    
 
 conns, rates = load("input")
 dists = compute_min_distances(list(rates.keys()))
 dists['AA'] = {k:min_distance('AA',k) for k in rates.keys()}
 solutions = compute_solutions(dists,rates, 30)
+print(solutions)
 ans1 = max(solutions.values())
-print(ans1)
+ans2 = solve2(dists, rates)
+print(ans1,',',ans2)
