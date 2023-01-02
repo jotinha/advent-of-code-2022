@@ -6,7 +6,7 @@ from multiprocessing import SimpleQueue
 from queue import LifoQueue, PriorityQueue
 from random import random
 import re
-from typing import List
+from typing import List, Set
 
 @dataclass
 class Valve:
@@ -48,8 +48,8 @@ def min_distance(s,e):
             if v not in visited:
                 q.put(p+[v])
 
-
-def compute_flow(nodes):
+    
+def compute_flow_up_to(nodes):
     nodes = list(nodes)
     time = 30
     rate = 0
@@ -62,28 +62,121 @@ def compute_flow(nodes):
         rate += node.flow
         time -= dt
         #print(node, dt, rate, total, time)
+    return total, time, rate
+
+def compute_flow(nodes):
+    total, time, rate = compute_flow_up_to(nodes)
+    return total + time*rate
+
+def compute_flow_upperbound(nodes, other_valves):
+    total, time, rate = compute_flow_up_to(nodes)
+    potential_rate = sorted(v.flow for v in other_valves)
+    return total + time*(rate+sum(potential_rate[:time//2]))
+
+
+@dataclass
+class State:
+    pressure_relieved : int
+    rate: int
+    time_left: int
+    current: Valve
+    path: List[Valve]
+    unseen : Set[Valve]
+
+    def __post_init__(self) -> None:
+        self._h = hash((self.pressure_relieved, self.rate, self.time_left, self.current,
+        tuple(self.path),
+        tuple(self.unseen)
+        ))
+
+    def __hash__(self) -> int:        
+        return self._h
+
+def estimate_upper_bound(s: State):
+    max_flow_left = sum(sorted((v.flow for v in s.unseen), reverse=True)[:s.time_left//2])
+    return s.pressure_relieved + \
+            (s.rate + max_flow_left)*s.time_left
+       
+
+def find_max_reward_path_2(start):
+    valves_with_flow = set(v for v in valves.values() if v.flow > 0)
+    best = 0
+    q = LifoQueue() # DFS
+
+    q.put(State(0, 0, 30, start, [], valves_with_flow))
+
+    seen_paths = set()
     
-    total += time*rate
-    return total
+    it = 0
+    while not q.empty():
+        it += 1
+        s : State = q.get()
+        
+        if s.pressure_relieved > best:
+            best = s.pressure_relieved
+            print(it, q.qsize(), best)
+
+        if s.time_left == 0:
+            continue
+        
+        if estimate_upper_bound(s) < best:
+            continue
+        
+        for v in s.unseen:
+            sn = next_state(s, v)
+            if sn not in seen_paths:
+                seen_paths.add(sn)
+                q.put(sn)
+
+    return best
+
+def next_state(state: State, node: Valve) -> State:
+    dt = min_distance(state.current, node) + 1
+    if dt > state.time_left:
+        return State(state.pressure_relieved + state.time_left * state.rate,
+                    state.rate,0, state.current , state.path,
+                    state.unseen)
+    else:
+        return State(state.pressure_relieved + dt*state.rate,
+                    state.rate + node.flow, state.time_left - dt,
+                    node,state.path + [node], state.unseen - {node}) 
 
 def find_max_reward_path(start):
     valves_with_flow = [v for v in valves.values() if v.flow > 0]
     best_flow = 0
-    total = factorial(len(valves_with_flow))
-    from tqdm import tqdm
-    for rest in tqdm(permutations(valves_with_flow), total=total):
-        p = [start, *rest]
+    
+    #q = SimpleQueue() # BFS
+    #q = LifoQueue() # DFS
+    q = PriorityQueue()
+    q.put((0,0,[start]))
+    
+    from tqdm import trange
+    for it in range(10_000_000):
+        if (it%10_000 == 0 and it > 0):
+            print(it, q.qsize(),best_flow, p)
+        if q.empty(): break
+        priority,_,p = q.get()
+        flow_ub = -priority
+        
+        if flow_ub < best_flow:
+            continue
+
         flow = compute_flow(p)
         if flow > best_flow:
             best_flow = flow
-            print(best_flow, p)
+            print(it, q.qsize(), best_flow, p)
+        
+        other_valves = set(v for v in valves_with_flow if v not in p)
+        for n in other_valves:
+            pp = p + [n]
+            q.put((-compute_flow_upperbound(pp, other_valves - {n}), random(), pp))
     return best_flow        
 
     #return max(map(compute_flow,([start,*rest] for rest in permutations(valves_with_flow))))
 
 
-valves = load("test")
-print(find_max_reward_path(valves["AA"]))
+valves = load("input")
+print(find_max_reward_path_2(valves["AA"]))
 
 #test_path = get_valves(c+c for c in "ADBJHEC")
 #test_path_2 = get_valves(c+c for c in "ABJDHFEC")
