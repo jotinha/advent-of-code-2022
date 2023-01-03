@@ -9,13 +9,26 @@ interface Valve {
 interface State {
     valve: string;
     time: number;
-    open: Set<string>;
+    open: number, 
     pressure: number;
 }
 
 interface VisitedState {
-    open: Set<string>;
+    open: number; 
     current: string;
+}
+
+
+let tobit = (n : number) => 1 << n;
+let set_from = (xs: number[]) : number => xs.reduce(set_add, 0);
+let set_add = (s: number, n: number) => s | tobit(n);
+let set_has = (s: number, n: number) => (s & tobit(n)) != 0;
+
+let s = set_from([1,2,3]); 
+if (set_has(s,2) && !set_has(s, 5) && set_has(set_add(s,10),10) && !set_has(s,10)) {
+    console.log("ok")
+} else {
+    throw Error("tests failed");
 }
 
 let parseLine = function(line: string): Valve {
@@ -48,28 +61,31 @@ let union = function<T>(a: Set<T>, b: Set<T>) : Set<T> { return new Set([...a,..
 
 let find_max_reward = function(time: number) : number {
      
-    let valves_with_flow = Object.entries(valves).filter(([k,v]) => v.flow > 0).map(([k,v]) => k)
-    let start : State = {valve: "AA", time, open: new Set(), pressure:0}
+    let valves_with_flow = Object.entries(valves).filter(([k,v]) => v.flow > 0).map(([k,v]) => k)   
+    let ids = Object.fromEntries(valves_with_flow.map((v,i) => [v,i])) // maps name to unique code
+    console.log(ids);
+ 
+    let start : State = {valve: "AA", time, open: 0, pressure:0}
     let q = [start];
     
     //solutions is a map of open nodes to the pressure they can release for time iterations
-    let solutions : Map<Set<string>, number> = new Map();
+    let solutions : Map<number,number> = new Map(); 
 
-    let visited : Map<VisitedState, number> = new Map();
+    let visited : Map<string,number> = new Map(); 
     let it = 0;
     
     while (q.length > 0) {
         it += 1
-        if (it % 1_000 == 0) 
+        if (it % 10_000 == 0) 
             console.log(it, solutions.size, Math.max(...solutions.values()));
    
         let s = q.pop()!;
         
-        if (s.pressure > (solutions.get(s.open) ?? 0)) 
+        if (s.pressure > (solutions.get(s.open) ?? 0))
             solutions.set(s.open, s.pressure);
         
         valves_with_flow.forEach(v => {
-            if (s.open.has(v)) return;
+            if (set_has(s.open,ids[v])) return;
             //if (valves[v].flow == 0) return;
             let d = min_distance(s.valve, v);
             let new_time = s.time - d - 1;
@@ -78,11 +94,12 @@ let find_max_reward = function(time: number) : number {
                 valve: v,
                 time: new_time,
                 pressure: s.pressure + new_time * valves[v].flow,
-                open: union(s.open, new Set([v]))
+                open: set_add(s.open, ids[v]!) 
             };
-            
-            let vs : VisitedState = {open: sn.open, current: sn.valve}
-            console.log(visited);
+           
+            //creates a key for the visited map that is the stringification of the set open and
+            //the current valve name (e.g. 63AA)
+            let vs = sn.open + sn.valve; 
             if (sn.pressure > (visited.get(vs) ?? 0)) {
                 visited.set(vs, sn.pressure);
                 q.push(sn);
@@ -94,7 +111,7 @@ let find_max_reward = function(time: number) : number {
 
 }
 
-const file = readFileSync("test", "utf-8");
+const file = readFileSync("input", "utf-8");
 const valves = Object.fromEntries(
     file.split("\n").filter(l=>l.trim() != '').map(parseLine).map(v => [v.name, v]))
 
