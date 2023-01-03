@@ -37,21 +37,30 @@ let parseLine = function(line: string): Valve {
     return {name, flow: +flow, to: to.split(', ')}
 } 
 
-let min_distance = function(s: string, e: string) : number {
-    let q = [[s]]; 
-    let visited : Set<string> = new Set();
+let min_distance = function() {
+    
+    let cache : {[k:string]:number} = {}; 
+ 
+    let compute = function(s: string, e: string) : number {
+        let q = [[s]]; 
+        let visited : Set<string> = new Set();
 
-    while (q.length > 0) {
-        let p = q.shift()!; // BFS, it only gives shortest path for unweighted graphs
-        let n = p[p.length -1];
-        visited.add(n);
-        if (n === e) { 
-            return p.length -1;
+        while (q.length > 0) {
+            let p = q.shift()!; // BFS, it only gives shortest path for unweighted graphs
+            let n = p[p.length -1];
+            visited.add(n);
+            if (n === e) { 
+                return p.length -1;
+            }
+            neighbors(n).filter(v => !visited.has(v)).forEach(v => q.push(p.concat(v)));
         }
-        neighbors(n).filter(v => !visited.has(v)).forEach(v => q.push(p.concat(v)));
+        return -1;
     }
-    return -1;
-}
+    return function(s: string, e: string) : number {
+        let key = s>e ? e+s : s+e 
+        return cache[key] ?? (cache[key] = compute(s,e));
+    } 
+}();
 
 let neighbors = function(s: string): string[] {
     return valves[s].to
