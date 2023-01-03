@@ -26,12 +26,17 @@ let set_add = (s: number, n: number) => s | tobit(n);
 let set_has = (s: number, n: number) => (s & tobit(n)) != 0;
 let set_isdisjoint = (a: number, b:number) => (a & b) == 0;
 
-let s = set_from([1,2,3,31]); 
-if (set_has(s,2) && set_has(s,31) && !set_has(s, 5) && set_has(set_add(s,10),10) && !set_has(s,10)) {
-    console.log("ok")
-} else {
-    throw Error("tests failed");
-}
+(function test_sets() {
+    let s = set_from([1,2,3,31]); 
+    if (
+        set_has(s,2) && 
+        set_has(s,31) && 
+        !set_has(s, 5) && 
+        set_has(set_add(s,10),10) &&
+        !set_has(s,10)
+    ) return;
+    throw "tests failed";
+})();
 
 let parseLine = function(line: string): Valve {
     const re = /Valve ([A-Z][A-Z]) has flow rate=(\d+); tunnels? leads? to valves? ([A-Z, ]+)/
@@ -86,8 +91,8 @@ let find_max_rewards = function(time: number) : Map<number,number> {
     
     while (q.length > 0) {
         it += 1
-        if (it % 10_000 == 0) 
-            console.log(it, solutions.size, Math.max(...solutions.values()));
+        //if (it % 10_000 == 0) 
+        //    console.log(it, solutions.size, Math.max(...solutions.values()));
    
         let s = q.pop()!;
         
@@ -108,7 +113,6 @@ let find_max_rewards = function(time: number) : Map<number,number> {
                 pressure: s.pressure + new_time * valves[v].flow,
                 open: set_add(s.open, ids[v]!) 
             };
-            //console.log(ids[v],sn)
            
             //creates a key for the visited map that is the stringification of the set open and
             //the current valve name (e.g. 63AA)
@@ -120,8 +124,8 @@ let find_max_rewards = function(time: number) : Map<number,number> {
         })
         //throw "die";
     } 
-    console.log(it, "iterations");
-    console.log(solutions.size, "solutions");
+    //console.log(it, "iterations");
+    //console.log(solutions.size, "solutions");
     return solutions;
 }
 
