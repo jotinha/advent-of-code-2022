@@ -1,6 +1,8 @@
-all: bin/main.js
+all: main.js
 	node $<
 
-bin/main.js: main.ts
-	mkdir -p bin
-	tsc $< --outFile $@
+main.js: main.ts package.json
+	tsc $<
+
+package.json:
+	npm install --save @types/node
