@@ -1,4 +1,4 @@
-all: 
-	@echo TODO,TODO
+all: main.php 
+	php $<	
 
 
