@@ -24,12 +24,12 @@ $floor = 0b1111_1111;
 $wall =  0b1000_0000;
 $world = [];
 
-$pieces = [ # start at two units from left wall (first bit is wall
-    0b0001_1110,
-    0b0000_1000_0001_1100_0000_1000,
-    0b0000_0100_0000_0100_0001_11000,
-    0b0001_0000_0001_0000_0001_0000_0001_0000,
-    0b0001_1000_0001_1000
+$pieces = [ # start at two units from left wall
+    0b00111100,
+    0b00010000_00111000_00010000,
+    0b00001000_00001000_00111000,
+    0b00100000_00100000_00100000_00100000,
+    0b00110000_00110000
 ];
 
 function row_collides($row, &$world, $y) {
@@ -57,10 +57,8 @@ function move_left($piece) { return array_map('blshift', $piece);}
 function move_right($piece) { return array_map('brshift', $piece);}
 
 function hits_wall($piece) { 
-    foreach($piece as $b) { 
-        if (($b & 0b1000_0000) > 0) return true;
-    }
-    return false;
+    $wall = 0x1010101; # same as 1 | (1<<8) | (1<<16) | (1<<24); 
+    return ($piece & $wall) > 0;
 };
 
 function hits_world($piece, &$world, $y) {
@@ -142,9 +140,12 @@ function draw($piece) {
 
 #display($world);
 #echo "$ans1,$ans2\n";
-
-assert(PHP_INT_SIZE >= 4);
-draw($pieces[2]);
-
-
+$wall = 0x1010101; # same as 1 | (1<<8) | (1<<16) | (1<<24); 
+draw($wall);
+foreach($pieces as $p) {echo "\n";draw($p>>0);}
+foreach($pieces as $p) assert(!hits_wall($p));
+foreach($pieces as $p) assert(!hits_wall($p << 1));
+foreach($pieces as $p) assert(!hits_wall($p << 2));
+foreach($pieces as $p) assert(hits_wall($p << 3));
+foreach($pieces as $p) assert(!hits_wall($p >> 1));
 
