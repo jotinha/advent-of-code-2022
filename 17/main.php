@@ -27,7 +27,7 @@ $world = [];
 $pieces = [ # start at two units from left wall (first bit is wall
     0b0001_1110,
     0b0000_1000_0001_1100_0000_1000,
-    0b0000_01000_0000_01000_0001_11000,
+    0b0000_0100_0000_0100_0001_11000,
     0b0001_0000_0001_0000_0001_0000_0001_0000,
     0b0001_1000_0001_1000
 ];
@@ -132,6 +132,7 @@ function solve1(&$pieces, &$world, $moves) {
 function draw($piece) {
     $full = $piece | (1<<32);
     $line = substr(strtr(decbin($full),"01",".@"),1);
+    assert(strlen($line)==32);
     echo chunk_split($line, 8);
 }
     
@@ -143,4 +144,7 @@ function draw($piece) {
 #echo "$ans1,$ans2\n";
 
 assert(PHP_INT_SIZE >= 4);
-draw($pieces[1]);
+draw($pieces[2]);
+
+
+
