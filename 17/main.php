@@ -91,33 +91,30 @@ function place($piece, &$world, $y) {
 
 function simulate_one($piece, &$world, &$moves, $height=0) {
     $y = $height + 3; 
+    echo "move: ", $moves->valid() . "," . $moves->current();
+    while($moves->valid() ) { 
+        $wind = $moves->current();
+        $moves->next();
 
-    while($wind = current($moves) ) {
         echo "$wind y=$y ".join(",",array_map('decbin',$piece))."\n";
-       
 
         $candidate = $wind == '<' ? move_left($piece) : move_right($piece);
         if (!hits_wall($candidate) and !hits_world($candidate, $world, $y)) { 
             $piece = $candidate;
         }
         
-        next($moves);
-        
         $dworld = array_pad($world,10,0);
         place($piece, $dworld, $y);
-        display($dworld); 
+        #display($dworld); 
         
         $y--; 
         if ($y < 0 or hits_world($piece, $world, $y)) {
             place($piece, $world, $y+1);
-            return $y+1+count($piece);
-            echo "placed";
+            return max($y+1+count($piece),$height);
         }
-
         $dworld = array_pad($world,10,0);
         place($piece, $dworld, $y);
-        display($dworld); 
- 
+        #display($dworld); 
     }
 }
 
@@ -133,10 +130,15 @@ function display(&$world) {
 
 }
 function solve1(&$pieces, &$world, $moves) {
-    $i = 0;
+    $moves_iter = new InfiniteIterator(new ArrayIterator($moves));
+    $pieces_iter = new InfiniteIterator(new ArrayIterator($pieces));
+    
     $y = 0;
-    while(current($moves)) {
-        $y = simulate_one($pieces[$i++ % count($pieces)], $world, $moves, $y);
+    $i = 0;
+    $moves_iter->rewind();
+    foreach($pieces_iter as $piece) {
+        $y = simulate_one($piece, $world, $moves_iter, $y);
+        if (++$i == 2022) break;
     }
     return $y;
 }
