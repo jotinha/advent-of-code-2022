@@ -25,24 +25,11 @@ $wall =  0b1000_0000;
 $world = [];
 
 $pieces = [ # start at two units from left wall (first bit is wall
-    # bitmaps are upside down
-    [0b000_1111_0],
-    
-    [0b000_010_00,
-     0b000_111_00,
-     0b000_010_00],
-    
-    [0b000_111_00,
-     0b000_001_00,
-     0b000_001_00],
-    
-    [0b000_1_0000,
-     0b000_1_0000,
-     0b000_1_0000,
-     0b000_1_0000],
-    
-    [0b000_11_000,
-     0b000_11_000]
+    0b0001_1110,
+    0b0000_1000_0001_1100_0000_1000,
+    0b0000_01000_0000_01000_0001_11000,
+    0b0001_0000_0001_0000_0001_0000_0001_0000,
+    0b0001_1000_0001_1000
 ];
 
 function row_collides($row, &$world, $y) {
@@ -142,10 +129,18 @@ function solve1(&$pieces, &$world, $moves) {
     }
     return $y;
 }
+function draw($piece) {
+    $full = $piece | (1<<32);
+    $line = substr(strtr(decbin($full),"01",".@"),1);
+    echo chunk_split($line, 8);
+}
+    
 
-$ans1 = solve1($pieces, $world, $moves);
-$ans2 = 0;
+#$ans1 = solve1($pieces, $world, $moves);
+#$ans2 = 0;
 
-display($world);
-echo "$ans1,$ans2\n";
+#display($world);
+#echo "$ans1,$ans2\n";
 
+assert(PHP_INT_SIZE >= 4);
+draw($pieces[1]);
