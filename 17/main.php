@@ -22,7 +22,7 @@ function collides_with_world(&$piece, &$world, $y) {
 
 $floor = 0b1111_1111;
 $wall =  0b1000_0000;
-$world = [-1 => $floor];
+$world = [];
 
 $pieces = [ # start at two units from left wall (first bit is wall
     # bitmaps are upside down
@@ -85,24 +85,39 @@ function hits_world($piece, &$world, $y) {
 
 function place($piece, &$world, $y) {
     foreach($piece as $i => $row) {
-        $world[$y+$i] = $row; 
+        $world[$y+$i] = ($world[$y+$i] ?? 0 ) | $row; 
     }
 } 
 
-function simulate_one($piece, &$world, $moves, $height=0) {
-    $y = $height + 4; #
+function simulate_one($piece, &$world, &$moves, $height=0) {
+    $y = $height + 3; 
 
-    while($wind = next($moves) ) {
+    while($wind = current($moves) ) {
+        echo "$wind y=$y ".join(",",array_map('decbin',$piece))."\n";
+       
+
         $candidate = $wind == '<' ? move_left($piece) : move_right($piece);
-        if (!hits_wall($candidate)) $piece = $candidate;
+        if (!hits_wall($candidate) and !hits_world($candidate, $world, $y)) { 
+            $piece = $candidate;
+        }
+        
+        next($moves);
+        
+        $dworld = array_pad($world,10,0);
+        place($piece, $dworld, $y);
+        display($dworld); 
         
         $y--; 
-        if (hits_world($piece, $world, $y)) {
+        if ($y < 0 or hits_world($piece, $world, $y)) {
             place($piece, $world, $y+1);
-            return $y;
-        } else {
-            $piece = $candidate; //continue
-        } 
+            return $y+1+count($piece);
+            echo "placed";
+        }
+
+        $dworld = array_pad($world,10,0);
+        place($piece, $dworld, $y);
+        display($dworld); 
+ 
     }
 }
 
@@ -117,8 +132,18 @@ function display(&$world) {
     echo "+-------+\n";
 
 }
+function solve1(&$pieces, &$world, $moves) {
+    $i = 0;
+    $y = 0;
+    while(current($moves)) {
+        $y = simulate_one($pieces[$i++ % count($pieces)], $world, $moves, $y);
+    }
+    return $y;
+}
 
-simulate_one($pieces[1], $world, $moves);
-var_dump($world);
+$ans1 = solve1($pieces, $world, $moves);
+$ans2 = 0;
+
 display($world);
+echo "$ans1,$ans2\n";
 
