@@ -17,20 +17,19 @@ function hits_wall($piece) {
 };
 
 function hits_world($piece, &$world, $y) {
-    
-    for ($i=0; $i < 4; $i++) {
-        $row = $piece & 0b1111_1111; # mask last row
-        if ((ord($world[$y+$i]) & $row) > 0) return true;
-        $piece >>=8; # scroll the piece down one line
-    } 
-    return false;
+    $wall = 0x1010101; # same as 1 | (1<<8) | (1<<16) | (1<<24); 
+    return ($piece & (getframe($world, $y) | $wall)) > 0;
+}
+
+function getframe(&$world, $y) {
+    return unpack("L",substr($world, $y, 4))[1];
 }
 
 function place($piece, &$world, $y) {
+    $frame = $piece | getframe($world,$y);
+    $s = pack("L",$frame);
     for ($i=0; $i < 4; $i++) {
-        $row = $piece & 0b1111_1111; # mask last row
-        $world[$y+$i] = chr(ord($world[$y+$i]) | $row);
-        $piece >>=8; # scroll the piece down one line
+        $world[$y+$i] = $s[$i]; 
     }
 } 
 
@@ -52,7 +51,7 @@ function simulate(&$pieces, &$world, $moves, $n) {
         $candidate = $wind == '<' ? $piece << 1 : $piece >> 1;
         #echo "Jet of gas pushes rock $wind";
     
-        if (!hits_wall($candidate) and !hits_world($candidate, $world, $y)) { 
+        if (!hits_world($candidate, $world, $y)) { 
             $piece = $candidate;
             #echo "\n";
         } #else { echo "but nothing happens\n";}
@@ -137,12 +136,11 @@ assert(piece_height($pieces[3])==4);
 assert(piece_height($pieces[4])==2);
 
 $world = str_repeat("\0",1<<21); # max is 2GB (1<<31)-1
-#$ans1 = simulate($pieces, $world, $moves, 2022);
-$ans1 = "TODO";
+$ans1 = simulate($pieces, $world, $moves, 2022);
+#$ans1 = "TODO";
 #$ans2 = simulate($pieces, $world, $moves, 1_000_000_000_000);
 $ans2 = simulate($pieces, $world, $moves,  1_000_000);
 
 #display($world);
 echo "$ans1,$ans2\n";
-
 #display($world);
