@@ -3,8 +3,6 @@
 $data = trim(file_get_contents("input"));
 $moves = str_split($data);
 
-$world = [];
-
 $pieces = [ # start at two units from left wall
     0b00111100,
     0b00010000_00111000_00010000,
@@ -22,7 +20,7 @@ function hits_world($piece, &$world, $y) {
     
     for ($i=0; $i < 4; $i++) {
         $row = $piece & 0b1111_1111; # mask last row
-        if ((($world[$y+$i] ?? 0) & $row) > 0) return true;
+        if ((ord($world[$y+$i]) & $row) > 0) return true;
         $piece >>=8; # scroll the piece down one line
     } 
     return false;
@@ -31,25 +29,24 @@ function hits_world($piece, &$world, $y) {
 function place($piece, &$world, $y) {
     for ($i=0; $i < 4; $i++) {
         $row = $piece & 0b1111_1111; # mask last row
-        $world[$y+$i] = ($world[$y+$i] ?? 0 ) | $row;
+        $world[$y+$i] = chr(ord($world[$y+$i]) | $row);
         $piece >>=8; # scroll the piece down one line
     }
 } 
 
 function simulate(&$pieces, &$world, $moves, $n) {
-    $moves = new InfiniteIterator(new ArrayIterator($moves));
-    $pieces = new InfiniteIterator(new ArrayIterator($pieces));
+    $moves_iter = new InfiniteIterator(new ArrayIterator($moves));
+    $pieces_iter = new InfiniteIterator(new ArrayIterator($pieces));
    
     $height = 0;
     $y = $height + 3;
 
-    $pieces->rewind();   
-    $piece = $pieces->current();
+    $pieces_iter->rewind();   
+    $piece = $pieces_iter->current();
     #echo "rock begins falling\n";
     #preview($piece, $world, $y); 
 
-     
-    foreach($moves as $wind) {
+    foreach($moves_iter as $wind) {
         #echo count($world)."\n";
        
         $candidate = $wind == '<' ? $piece << 1 : $piece >> 1;
@@ -69,18 +66,19 @@ function simulate(&$pieces, &$world, $moves, $n) {
             #echo "causing it to come to rest\n";
             $height = max($y+1+piece_height($piece), $height);
             $y = $height + 3;
-            if ($n % 10_000 == 0) echo "$n\n";
+            #if ($n % 10_000 == 0) echo "$n\n";
             if (--$n == 0) return $height;
             
             #echo "A new rock begins falling\n";
-            $pieces->next();
-            $piece = $pieces->current();
+            if ($y + 4 > strlen($world)) throw new Error("world out of bounds");
+            $pieces_iter->next();
+            $piece = $pieces_iter->current();
 
         } #else {echo ":\n";}
         #preview($pieces->current(), $world, $y);
         #if (($n % 1000) == 0)
-        $hh=height_after_complete_line($world,$height);
-        echo "h=$height, toline=$hh\n";
+        #$hh=height_after_complete_line($world,$height);
+        #echo "h=$height, toline=$hh\n";
     }
 }
 function height_after_complete_line(&$world, $y) {
@@ -101,8 +99,9 @@ function piece_height($piece) {
 }
 
 function display(&$world) {
-    for ($i = max(array_keys($world)); $i >= min(array_keys($world)); --$i) {
-        $row = ($world[$i] ?? 0) | (1<<8) | 1;
+    
+    for ($i = strlen($world)-1; $i >= 0; --$i) {
+        $row = ord($world[$i]) | (1<<8) | 1;
         $line = strtr(decbin($row),"01",".@");
         $line[0] = '|'; $line[8] = '|';
         echo $line."\n"; 
@@ -123,7 +122,6 @@ function preview($piece,&$world, $y) {
     }
     place($piece, $world2, $y);
     display($world2); 
-    
 }
     
 #foreach($pieces as $p) {echo "\n";draw($p>>8);}
@@ -138,11 +136,13 @@ assert(piece_height($pieces[2])==3);
 assert(piece_height($pieces[3])==4);
 assert(piece_height($pieces[4])==2);
 
+$world = str_repeat("\0",1<<21); # max is 2GB (1<<31)-1
 #$ans1 = simulate($pieces, $world, $moves, 2022);
-$ans1 = 1;
-#$ans2 = solve($pieces, $world, $moves, 1_000_000_000_000);
-$ans2=simulate($pieces, $world, $moves, 1000);
+$ans1 = "TODO";
+#$ans2 = simulate($pieces, $world, $moves, 1_000_000_000_000);
+$ans2 = simulate($pieces, $world, $moves,  1_000_000);
 
 #display($world);
 echo "$ans1,$ans2\n";
 
+#display($world);
