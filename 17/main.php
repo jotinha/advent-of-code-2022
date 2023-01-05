@@ -36,34 +36,59 @@ function place($piece, &$world, $y) {
     }
 } 
 
-function simulate_one($piece, &$world, &$moves, $height=0) {
-    $y = $height + 3; 
-    #echo "spawining new piece\n";
-    while($moves->valid() ) { 
-        $wind = $moves->current();
-        $moves->next();
-        
-      
-        #preview($piece, $world, $y);
+function simulate(&$pieces, &$world, $moves, $n) {
+    $moves = new InfiniteIterator(new ArrayIterator($moves));
+    $pieces = new InfiniteIterator(new ArrayIterator($pieces));
+   
+    $height = 0;
+    $y = $height + 3;
+
+    $pieces->rewind();   
+    $piece = $pieces->current();
+    #echo "rock begins falling\n";
+    #preview($piece, $world, $y); 
+
+     
+    foreach($moves as $wind) {
+        #echo count($world)."\n";
        
         $candidate = $wind == '<' ? $piece << 1 : $piece >> 1;
-        #echo "y=$y $wind Will hit wall? ";
+        #echo "Jet of gas pushes rock $wind";
+    
         if (!hits_wall($candidate) and !hits_world($candidate, $world, $y)) { 
             $piece = $candidate;
-            #echo "no\n";
-        } #else { echo "yes\n";}
-       
+            #echo "\n";
+        } #else { echo "but nothing happens\n";}
          
         #preview($piece, $world, $y);
         
         $y--; 
-        #echo "Will hit world? ";
+        #echo "Rock falls 1 unit";
         if ($y < 0 or hits_world($piece, $world, $y)) {
             place($piece, $world, $y+1);
-            #echo "yes\n";
-            return max($y+1+piece_height($piece), $height);
-        } #else { echo "no\n";}
+            #echo "causing it to come to rest\n";
+            $height = max($y+1+piece_height($piece), $height);
+            $y = $height + 3;
+            if ($n % 10_000 == 0) echo "$n\n";
+            if (--$n == 0) return $height;
+            
+            #echo "A new rock begins falling\n";
+            $pieces->next();
+            $piece = $pieces->current();
+
+        } #else {echo ":\n";}
+        #preview($pieces->current(), $world, $y);
+        #if (($n % 1000) == 0)
+        $hh=height_after_complete_line($world,$height);
+        echo "h=$height, toline=$hh\n";
     }
+}
+function height_after_complete_line(&$world, $y) {
+    for ($i = $y; $i >= 0; $i--) {
+        #echo $i,":", substr(decbin($world[$i] ?? 0 | 1<<8),1), "\n";
+        if (($world[$i] ?? 0) == (0xFF^1)) {echo "<---- ", $y-$i,"\n"; break;}
+    }
+    return $y-$i;
 }
 
 function piece_height($piece) {
@@ -85,19 +110,6 @@ function display(&$world) {
     if ($i<=0) echo "+-------+\n";
 
 }
-function solve(&$pieces, &$world, $moves, $n) {
-    $moves_iter = new InfiniteIterator(new ArrayIterator($moves));
-    $pieces_iter = new InfiniteIterator(new ArrayIterator($pieces));
-    
-    $y = 0;
-    $i = 0;
-    $moves_iter->rewind();
-    foreach($pieces_iter as $piece) {
-        $y = simulate_one($piece, $world, $moves_iter, $y);
-        if (++$i == $n) break;
-    }
-    return $y;
-}
 function draw($piece) {
     $full = $piece | (1<<32);
     $line = substr(strtr(decbin($full),"01",".@"),1);
@@ -114,14 +126,6 @@ function preview($piece,&$world, $y) {
     
 }
     
-
-$ans1 = solve($pieces, $world, $moves, 2022);
-#$ans2 = solve($pieces, $world, $moves, 1_000_000_000_000);
-$ans2 = solve($pieces, $world, $moves, 1_000_000);
-
-#display($world);
-echo "$ans1,$ans2\n";
-$wall = 0x1010101; # same as 1 | (1<<8) | (1<<16) | (1<<24); 
 #foreach($pieces as $p) {echo "\n";draw($p>>8);}
 foreach($pieces as $p) assert(!hits_wall($p));
 foreach($pieces as $p) assert(!hits_wall($p << 1));
@@ -133,3 +137,12 @@ assert(piece_height($pieces[1])==3);
 assert(piece_height($pieces[2])==3);
 assert(piece_height($pieces[3])==4);
 assert(piece_height($pieces[4])==2);
+
+#$ans1 = simulate($pieces, $world, $moves, 2022);
+$ans1 = 1;
+#$ans2 = solve($pieces, $world, $moves, 1_000_000_000_000);
+$ans2=simulate($pieces, $world, $moves, 1000);
+
+#display($world);
+echo "$ans1,$ans2\n";
+
