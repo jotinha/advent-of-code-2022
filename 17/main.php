@@ -3,25 +3,6 @@
 $data = trim(file_get_contents("test"));
 $moves = str_split($data);
 
-function collapse_masks(&$masks) {
-    return array_reduce($masks, function($acc,$x) {
-        return $acc | $x;
-    });
-}
-
-function space_left(&$piece) {
-    $mask = collapse_masks($piece['mask']); 
-    for($n=1; ($mask << $n) <= (1<<7); $n++) {}
-    return $n-1;
-}
-function collides_with_world(&$piece, &$world, $y) {
-    foreach($piece["mask"] as $i => $m) {
-        if (($world[$y - $i] & $m) > 0) { return false; }
-    }
-}
-
-$floor = 0b1111_1111;
-$wall =  0b1000_0000;
 $world = [];
 
 $pieces = [ # start at two units from left wall
@@ -31,27 +12,6 @@ $pieces = [ # start at two units from left wall
     0b00100000_00100000_00100000_00100000,
     0b00110000_00110000
 ];
-
-function row_collides($row, &$world, $y) {
-    return (($world[$y] ?? $wall) & $row) > 0;
-}
-
-function collides(&$piece, &$world) {
-    foreach($piece as $i => $row) {
-        if (row_collides($row, $world, $y)) {
-            return true; 
-        }
-    }
-    return false;
-}
-
-# shift with wrap around
-function blshift($b) { return ($b << 1 | $b >> 7) % 256; }
-function brshift($b) { return ($b >> 1 | $b << 7) % 256; }
-assert(blshift(0b11) == 0b110);
-assert(blshift(0b1100_0001) == 0b1000_0011);
-assert(brshift(0b11) == 0b1000_0001);
-assert(brshift(0b1100_0001) == 0b1110_0000);
 
 function move_left($piece) { return array_map('blshift', $piece);}
 function move_right($piece) { return array_map('brshift', $piece);}
@@ -142,7 +102,7 @@ function draw($piece) {
 #echo "$ans1,$ans2\n";
 $wall = 0x1010101; # same as 1 | (1<<8) | (1<<16) | (1<<24); 
 draw($wall);
-foreach($pieces as $p) {echo "\n";draw($p>>0);}
+foreach($pieces as $p) {echo "\n";draw($p>>8);}
 foreach($pieces as $p) assert(!hits_wall($p));
 foreach($pieces as $p) assert(!hits_wall($p << 1));
 foreach($pieces as $p) assert(!hits_wall($p << 2));
