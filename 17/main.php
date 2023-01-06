@@ -11,14 +11,15 @@ $pieces = [ # start at two units from left wall
     0b00110000_00110000
 ];
 
-function hits_wall($piece) { 
-    $wall = 0x1010101; # same as 1 | (1<<8) | (1<<16) | (1<<24); 
-    return ($piece & $wall) > 0;
-};
+function make_world($size) {
+    #world is a stream of bytes, each byte is a row with 8 bits, the first 7 are
+    #set to zero (nothing) and the rightmost is set to 1 (wall). No need for the left
+    #wall because moving a piece left wraps it around to the right
+    return str_repeat("\1",$size);
+}
 
 function hits_world($piece, &$world, $y) {
-    $wall = 0x1010101; # same as 1 | (1<<8) | (1<<16) | (1<<24); 
-    return ($piece & (getframe($world, $y) | $wall)) > 0;
+    return ($piece & getframe($world, $y)) > 0;
 }
 
 function getframe(&$world, $y) {
@@ -69,7 +70,7 @@ function simulate(&$pieces, &$world, $moves, $n) {
             if (--$n == 0) return $height;
             
             #echo "A new rock begins falling\n";
-            if ($y + 4 > strlen($world)) throw new Error("world out of bounds");
+            if ($y + 4 >= strlen($world)) throw new Error("world out of bounds");
             $pieces_iter->next();
             $piece = $pieces_iter->current();
 
@@ -79,13 +80,6 @@ function simulate(&$pieces, &$world, $moves, $n) {
         #$hh=height_after_complete_line($world,$height);
         #echo "h=$height, toline=$hh\n";
     }
-}
-function height_after_complete_line(&$world, $y) {
-    for ($i = $y; $i >= 0; $i--) {
-        #echo $i,":", substr(decbin($world[$i] ?? 0 | 1<<8),1), "\n";
-        if (($world[$i] ?? 0) == (0xFF^1)) {echo "<---- ", $y-$i,"\n"; break;}
-    }
-    return $y-$i;
 }
 
 function piece_height($piece) {
@@ -123,24 +117,10 @@ function preview($piece,&$world, $y) {
     display($world2); 
 }
     
-#foreach($pieces as $p) {echo "\n";draw($p>>8);}
-foreach($pieces as $p) assert(!hits_wall($p));
-foreach($pieces as $p) assert(!hits_wall($p << 1));
-foreach($pieces as $p) assert(!hits_wall($p << 2));
-foreach($pieces as $p) assert(hits_wall($p << 3));
-foreach($pieces as $p) assert(!hits_wall($p >> 1));
-assert(piece_height($pieces[0])==1);
-assert(piece_height($pieces[1])==3);
-assert(piece_height($pieces[2])==3);
-assert(piece_height($pieces[3])==4);
-assert(piece_height($pieces[4])==2);
-
-$world = str_repeat("\0",1<<21); # max is 2GB (1<<31)-1
+$world = make_world(1<<17);
 $ans1 = simulate($pieces, $world, $moves, 2022);
-#$ans1 = "TODO";
-#$ans2 = simulate($pieces, $world, $moves, 1_000_000_000_000);
-$ans2 = simulate($pieces, $world, $moves,  1_000_000);
 
-#display($world);
+$world = make_world(1<<25);
+$ans2 = simulate($pieces, $world, $moves, 100_000);
+
 echo "$ans1,$ans2\n";
-#display($world);
