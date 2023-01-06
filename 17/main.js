@@ -5,6 +5,14 @@ var mem = new WebAssembly.Memory({initial:1});
 const moves = fs.readFileSync("test").toString().trim().split("");
 const wasmBuffer = fs.readFileSync('bin/main.wasm');
 
+function draw_world_at(y) {
+  var data = new Uint8Array(mem.buffer, 64);
+  for (let i=10; i >= 0; i--) {
+    let pixels = (data[i] | (1<<8)).toString(2); 
+    console.log(pixels.replaceAll('0','.').replaceAll('1','@'))
+  }
+}
+
 WebAssembly.instantiate(wasmBuffer, {js: { mem }}).then(({instance}) => {
   const pieces = [0b00111100,
     0b00010000_00111000_00010000,
@@ -33,5 +41,6 @@ WebAssembly.instantiate(wasmBuffer, {js: { mem }}).then(({instance}) => {
   //var string = new TextDecoder('utf8').decode(bytes);
   let ans1 = instance.exports.main();
   console.log(ans1);
+  draw_world_at(0);
 
 });
