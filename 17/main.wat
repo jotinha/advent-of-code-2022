@@ -45,7 +45,6 @@
     (return (local.get $i)))
  
   (func $move_wind (param $moveidx i32) (param $piece i32) (result i32)    
-    (local $candidate i32)
     ;; shift $piece 1 bit right if getmove(moveidx) == 1 else shift 1 bit left
     (if (result i32)  
       (call $getmove (local.get $moveidx))
@@ -58,7 +57,7 @@
     (local.set $candidate 
       (call $move_wind (local.get 0) (local.get 1)))
 
-    (if (result i32) 
+    (if (result i32) ;; return piece if hits_world(candidate,y) else candidate
       (call $hits_world (local.get $candidate) (local.get $y))
       (then local.get $piece)
       (else local.get $candidate))
@@ -70,54 +69,74 @@
       (local.get $y))
   )
       
-  (func $simulate 
+  (func $simulate (result i32)
     (local $piece_idx i32)
     (local $move_idx i32)
     (local $piece i32)
     (local $it i32)
     (local $y i32)
+    (local $n i32)
+    (local $height i32)
 
     (local.set $it (i32.const 0))
     (local.set $piece_idx (i32.const 0))
     (local.set $move_idx (i32.const 0))
-    (local.set $y (i32.const 3))
+    (local.set $y (i32.const 4))
+    (local.set $n (i32.const 4))
+    (local.set $height (i32.const 0))
 
+
+    ;;put a temp floor on the world
+    (call $place (i32.const 0xFF) (i32.const 0))
+
+    (local.set $piece (call $getpiece (local.get $piece_idx))) ;; piece=getpiece(piece_idx)
+  
     (loop
-        (local.set $piece 
-          (call $getpiece (local.get $piece_idx))) ;; piece=getpiece(piece_idx)
 
-        ;;(local.set $piece ;; piece = move_wind(it, piece)
-        ;;  (call $move_wind (local.get $it) (local.get $piece)))
+      ;;(local.set $piece ;; piece = move_wind(it, piece)
+      ;;  (call $move_wind (local.get $it) (local.get $piece)))
 
-        (local.set $piece ;; piece = move_wind_unless_hit(it, piece, y)
-          (call $move_wind_unless_hit (local.get $it) (local.get $piece) (local.get $y)))
+      (local.set $piece ;; piece = move_wind_unless_hit(it, piece, y)
+        (call $move_wind_unless_hit (local.get $it) (local.get $piece) (local.get $y)))
 
-        (local.set $y (i32.sub (local.get $y) (i32.const 1))) ;; y-- 
+      (local.set $y (i32.sub (local.get $y) (i32.const 1))) ;; y-- 
 
-        ;; if y==0, next piece and increase y
+      (if 
+        (call $hits_world (local.get $piece) (local.get $y)) 
+        (then 
+          (call $place ;; place(piece, y+1)
+            (local.get $piece)
+            (i32.add (local.get $y) (i32.const 1)))
+          (local.set $y ;;y = y + 4 + piece_height(piece);
+            (i32.add 
+              (i32.add (i32.const 4) (local.get $y))
+              (call $piece_height (local.get $piece))))
+          (local.set $piece_idx ;;piece_idx++
+            (i32.add (local.get $piece_idx) (i32.const 1)))
+          (local.set $n ;;n--
+            (i32.sub (local.get $n) (i32.const 1)))
+          (local.set $piece (call $getpiece (local.get $piece_idx))) ;; piece=getpiece(piece_idx)
+          )
+      )
+        
+      (local.set $it (i32.add (local.get $it) (i32.const 1))) ;;it++
 
-        ;; (if 
-        ;;   (call $hits_world (local.get $piece) (local.get $y))
-        ;;   (then 
-        ;;     (call $place ;; place(piece, y+1)
-        ;;       (local.get $piece) 
-        ;;       (i32.add (local.get $y) (i32.const 1))))
-        ;; )
-        (local.set $it (i32.add (local.get $it) (i32.const 1))) ;;it++
-         
-        (br_if 0 (i32.lt_u (local.get $it) (i32.const 3))) ;; loop if it < 10
-    )
-    (call $place ;; place(piece, y+1)
-      (local.get $piece) 
-      (local.get $y))
+      (i32.mul
+        (i32.lt_u (local.get $it) (i32.const 2000))
+        (local.get $n))
+      br_if 0  ;; loop if it < MAX_ITER and n != 0 
+      )
+
+      ;; (call $place ;; place(piece, y)
+      ;;   (local.get $piece)
+      ;;   (local.get $y))
+      local.get $n
   )
+
 
   (func (export "main") (result i32)
     ;;(call $place (call $getpiece (i32.const 1)) (i32.const 0))
     call $simulate
-
-    ;;(call $getframe (i32.const 0))
-    i32.const 0
     return)
 
 )    
