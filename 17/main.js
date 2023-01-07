@@ -1,9 +1,10 @@
 // Assume add.wasm file exists that contains a single function adding 2 provided arguments
 const fs = require('fs');
 var mem = new WebAssembly.Memory({initial:1});
-
+const memsize = new WebAssembly.Global({value: 'i32',mutable:false}, mem.buffer.byteLength)
 const moves = fs.readFileSync("test").toString().trim().split("");
 const wasmBuffer = fs.readFileSync('bin/main.wasm');
+
 
 function draw_world_at(y) {
   var data = new Uint8Array(mem.buffer, 64);
@@ -13,7 +14,7 @@ function draw_world_at(y) {
   }
 }
 
-WebAssembly.instantiate(wasmBuffer, {js: { mem }}).then(({instance}) => {
+WebAssembly.instantiate(wasmBuffer, {js: { mem, memsize }}).then(({instance}) => {
   const pieces = [0b00111100,
     0b00010000_00111000_00010000,
     0b00001000_00001000_00111000,

@@ -1,5 +1,6 @@
 (module
   (import "js" "mem" (memory 1))
+  (global $memsize (import "js" "memsize") i32)
   (func $getpiece (param $i i32) (result i32)
     (local $piece i32)
     (i32.rem_u (local.get $i) (i32.const 5)) ;; offset 
@@ -144,19 +145,20 @@
       (i32.gt_u (local.get 0) (local.get 1))))
     
   (func $build_world (param $i i32)
-    ;;do (data[i] = wall;i+=4) while i < global.mem_size
+    ;;do (data[i] = wall;i+=4) while i < global.memsize
     (loop
       (i32.store (local.get $i) (i32.const 0x01010101))   ;; data[i] = 0x01..
       (local.tee $i (i32.add (local.get $i) (i32.const 4))) ;; i+=4; i
-      (i32.const 50_000) 
-      i32.lt_u ;; loop if i < 50k
+      global.get $memsize
+      i32.lt_u ;; loop if i < global.memsize
       br_if 0))
 
   (func (export "main") (result i32)
-    (call $build_world (i32.const 64))
+    (call $build_world (i32.const 64)) ;; init world as just a wall (world starts at 64, hard coded)
     ;;(call $place (call $getpiece (i32.const 1)) (i32.const 0))
     ;;(call $max_u (i32.const 0) (i32.const 10))
-    call $simulate
+    ;;call $simulate
+    (global.get $memsize)
     return)
 
 )    
