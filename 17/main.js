@@ -7,7 +7,7 @@ const wasmBuffer = fs.readFileSync('bin/main.wasm');
 
 function draw_world_at(y) {
   var data = new Uint8Array(mem.buffer, 64);
-  for (let i=10; i >= 0; i--) {
+  for (let i=20; i >= 0; i--) {
     let pixels = (data[i] | (1<<8)).toString(2); 
     console.log(pixels.replaceAll('0','.').replaceAll('1','@'))
   }

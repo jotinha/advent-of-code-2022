@@ -82,7 +82,7 @@
     (local.set $piece_idx (i32.const 0))
     (local.set $move_idx (i32.const 0))
     (local.set $y (i32.const 4))
-    (local.set $n (i32.const 4))
+    (local.set $n (i32.const 10))
     (local.set $height (i32.const 0))
 
 
@@ -104,13 +104,18 @@
       (if 
         (call $hits_world (local.get $piece) (local.get $y)) 
         (then 
-          (call $place ;; place(piece, y+1)
-            (local.get $piece)
-            (i32.add (local.get $y) (i32.const 1)))
-          (local.set $y ;;y = y + 4 + piece_height(piece);
-            (i32.add 
-              (i32.add (i32.const 4) (local.get $y))
-              (call $piece_height (local.get $piece))))
+          (local.set $y (i32.add (local.get $y) (i32.const 1))) ;; y++     
+
+          (call $place (local.get $piece) (local.get $y)) ;; place(piece, y)
+
+          (local.set $y  ;; y+=piece_height
+            (i32.add (local.get $y) (call $piece_height (local.get $piece))))
+          
+          (local.set $height ;; height = max(y,height)
+            (call $max_u (local.get $y) (local.get $height)))
+
+          (local.set $y (i32.add (local.get $height) (i32.const 3))) ;; y=height + 3
+
           (local.set $piece_idx ;;piece_idx++
             (i32.add (local.get $piece_idx) (i32.const 1)))
           (local.set $n ;;n--
@@ -130,12 +135,19 @@
       ;; (call $place ;; place(piece, y)
       ;;   (local.get $piece)
       ;;   (local.get $y))
-      local.get $n
+      (i32.sub (local.get $height) (i32.const 1))
   )
 
+  (func $max_u (param i32) (param i32) (result i32)
+    (select 
+      (local.get 0) (local.get 1)
+      (i32.gt_u (local.get 0) (local.get 1))))
+    
+    
 
   (func (export "main") (result i32)
     ;;(call $place (call $getpiece (i32.const 1)) (i32.const 0))
+    ;;(call $max_u (i32.const 0) (i32.const 10))
     call $simulate
     return)
 
