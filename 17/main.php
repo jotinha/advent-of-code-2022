@@ -1,6 +1,6 @@
 <?php
 
-$data = trim(file_get_contents("input"));
+$data = trim(file_get_contents("test"));
 $moves = str_split($data);
 
 $pieces = [ # start at two units from left wall
@@ -118,9 +118,9 @@ function preview($piece,&$world, $y) {
 }
     
 $world = make_world(1<<17);
-$ans1 = simulate($pieces, $world, $moves, 2022);
-
-$world = make_world(1<<25);
-$ans2 = simulate($pieces, $world, $moves, 100_000);
-
+$ans1 = simulate($pieces, $world, $moves, 500);
+display($world);
+#$world = make_world(1<<25);
+#$ans2 = simulate($pieces, $world, $moves, 100_000);
+$ans2 = 0;
 echo "$ans1,$ans2\n";

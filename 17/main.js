@@ -20,7 +20,6 @@ WebAssembly.instantiate(wasmBuffer, {js: { mem }}).then(({instance}) => {
     0b00100000_00100000_00100000_00100000,
     0b00110000_00110000]
   
-
   var dataView = new DataView(mem.buffer);
 
   //build world (just rows of 1's, which represent 7 empty bits and one 1 as the far right wall) 
@@ -40,7 +39,7 @@ WebAssembly.instantiate(wasmBuffer, {js: { mem }}).then(({instance}) => {
   //var bytes = new Uint8Array(mem.buffer, 0, length);
   //var string = new TextDecoder('utf8').decode(bytes);
   let ans1 = instance.exports.main();
-  console.log(ans1);
   draw_world_at(0);
+  console.log(ans1);
 
 });

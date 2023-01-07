@@ -82,7 +82,7 @@
     (local.set $piece_idx (i32.const 0))
     (local.set $move_idx (i32.const 0))
     (local.set $y (i32.const 4))
-    (local.set $n (i32.const 10))
+    (local.set $n (i32.const 2022))
     (local.set $height (i32.const 0))
 
 
@@ -126,9 +126,9 @@
         
       (local.set $it (i32.add (local.get $it) (i32.const 1))) ;;it++
 
-      (i32.mul
-        (i32.lt_u (local.get $it) (i32.const 2000))
-        (local.get $n))
+      ;;(i32.mul
+      ;;  (i32.lt_u (local.get $it) (i32.const 2000))
+      (local.get $n)
       br_if 0  ;; loop if it < MAX_ITER and n != 0 
       )
 
