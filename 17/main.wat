@@ -144,21 +144,39 @@
       (local.get 0) (local.get 1)
       (i32.gt_u (local.get 0) (local.get 1))))
     
-  (func $build_world (param $i i32)
-    ;;do (data[i] = wall;i+=4) while i < global.memsize
-    (loop
-      (i32.store (local.get $i) (i32.const 0x01010101))   ;; data[i] = 0x01..
-      (local.tee $i (i32.add (local.get $i) (i32.const 4))) ;; i+=4; i
-      global.get $memsize
-      i32.lt_u ;; loop if i < global.memsize
+  (func $build_world (param $y i32)
+    (local $wall i32)
+    (local.set $wall (i32.const 0x01010101))
+    
+    (loop ;;do setframe(wall,y); y++ while i < 2000
+      (call $setframe (local.get $wall) (local.get $y))
+      (local.tee $y (i32.add (local.get $y) (i32.const 1))) ;; y+=1; y
+      (i32.const 10_000)
+      i32.lt_u ;; loop if i < 10_000
       br_if 0))
 
+  (func $trim_world
+    ;;copy n bytes from end to start ;;fill rest with world
+    (local $y0 i32)
+    (local $y1 i32)
+    (local.set $y0 (i32.const 0))
+    (local.set $y1 (i32.const 5000))
+    (loop 
+      (call $setframe 
+        (call $getframe (local.get $y1)) 
+        (local.get $y0))
+      (local.set $y0 (i32.add (local.get $y0) (i32.const 4))) ;; y0 += 4
+      (local.set $y1 (i32.add (local.get $y1) (i32.const 4))) ;; y1 += 4
+      (i32.lt_u (local.get $y0) (i32.const 5000))
+      br_if 0)
+    (call $build_world (i32.const 5000))
+    )
+
   (func (export "main") (result i32)
-    (call $build_world (i32.const 64)) ;; init world as just a wall (world starts at 64, hard coded)
+    (call $build_world (i32.const 0)) ;; init world as just a wall
     ;;(call $place (call $getpiece (i32.const 1)) (i32.const 0))
     ;;(call $max_u (i32.const 0) (i32.const 10))
-    ;;call $simulate
-    (global.get $memsize)
+    call $simulate
     return)
 
 )    

@@ -1,7 +1,9 @@
 // Assume add.wasm file exists that contains a single function adding 2 provided arguments
 const fs = require('fs');
 var mem = new WebAssembly.Memory({initial:1});
-const memsize = new WebAssembly.Global({value: 'i32',mutable:false}, mem.buffer.byteLength)
+const memsize = new WebAssembly.Global({value: 'i32',mutable:false}, 
+  mem.buffer.byteLength)
+
 const moves = fs.readFileSync("test").toString().trim().split("");
 const wasmBuffer = fs.readFileSync('bin/main.wasm');
 
