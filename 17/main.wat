@@ -143,9 +143,17 @@
       (local.get 0) (local.get 1)
       (i32.gt_u (local.get 0) (local.get 1))))
     
-    
+  (func $build_world (param $i i32)
+    ;;do (data[i] = wall;i+=4) while i < global.mem_size
+    (loop
+      (i32.store (local.get $i) (i32.const 0x01010101))   ;; data[i] = 0x01..
+      (local.tee $i (i32.add (local.get $i) (i32.const 4))) ;; i+=4; i
+      (i32.const 50_000) 
+      i32.lt_u ;; loop if i < 50k
+      br_if 0))
 
   (func (export "main") (result i32)
+    (call $build_world (i32.const 64))
     ;;(call $place (call $getpiece (i32.const 1)) (i32.const 0))
     ;;(call $max_u (i32.const 0) (i32.const 10))
     call $simulate

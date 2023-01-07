@@ -22,12 +22,6 @@ WebAssembly.instantiate(wasmBuffer, {js: { mem }}).then(({instance}) => {
   
   var dataView = new DataView(mem.buffer);
 
-  //build world (just rows of 1's, which represent 7 empty bits and one 1 as the far right wall) 
-  //we will override the first bytes later with other data, but it's easier this wya
-  for (let i=0; i < mem.buffer.byteLength; i++) {
-    dataView.setUint8(i,1,true);
-  }
-
   pieces.forEach((p,i) => dataView.setUint32(i*4, p, true));
 
   dataView.setUint32(pieces.length*4, moves.length, true);
