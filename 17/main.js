@@ -40,3 +40,9 @@ WebAssembly.instantiate(wasmBuffer, {js: { mem, memsize }}).then(({instance}) =>
   console.log(ans1);
 
 });
+/*
+151428577
+15142861
+1514288
+151434
+*/

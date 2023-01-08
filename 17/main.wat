@@ -2,7 +2,6 @@
   (import "js" "mem" (memory 1))
   (global $memsize (import "js" "memsize") i32)
   (func $getpiece (param $i i32) (result i32)
-    (local $piece i32)
     (i32.rem_u (local.get $i) (i32.const 5)) ;; offset 
     (i32.mul (i32.const 4)) ;; *4
     i32.load
@@ -82,7 +81,7 @@
     (local.set $piece_idx (i32.const 0))
     (local.set $move_idx (i32.const 0))
     (local.set $y (i32.const 4))
-    (local.set $n (i32.const 2022))
+    (local.set $n (i32.const 1_000_000_00)) ;;1_000_000_000_0000
     (local.set $height (i32.const 0))
     (local.set $height (i32.const 0))
     (local.set $ntrims (i32.const 0))
@@ -125,18 +124,19 @@
           )
       )
 
-      (if ;; if height > 1010, trim world
-        (i32.gt_u (local.get $height) (i32.const 1900))
+      (if ;; if height > 1900, trim world
+        (i32.gt_u (local.get $height) (i32.const 9000))
         (then 
           (call $trim_world) ;; trim_world()
-          (local.set $y (i32.sub (local.get $y) (i32.const 1000))) ;; y -= 1000
-          (local.set $height (i32.sub (local.get $height) (i32.const 1000))) ;; h -= 1000
+          (local.set $y (i32.sub (local.get $y) (i32.const 5000))) ;; y -= 1000
+          (local.set $height (i32.sub (local.get $height) (i32.const 5000))) ;; h -= 1000
           (local.set $ntrims (i32.add (local.get $ntrims) (i32.const 1))) ;; ntrims++
           )
         )
         
       (local.set $move_idx (i32.add (local.get $move_idx) (i32.const 1))) ;;move_idx++
 
+      ;; TODO: functions to incrememnt move and piece
       ;; so variables it and pieces_idx don't grow too big
       (local.set $move_idx (i32.rem_u (local.get $move_idx) (i32.const 40))) ;;move_idx=%40
       ;;TODO: unhardcode number of moves 40
@@ -153,7 +153,7 @@
       ;;   (local.get $y))
       
       local.get $ntrims
-      i32.const 1000
+      i32.const 5000
       i32.mul
       local.get $height
       i32.add
@@ -183,16 +183,16 @@
     (local $y0 i32)
     (local $y1 i32)
     (local.set $y0 (i32.const 0))
-    (local.set $y1 (i32.const 1000))
+    (local.set $y1 (i32.const 5000))
     (loop 
       (call $setframe 
         (call $getframe (local.get $y1)) 
         (local.get $y0))
       (local.set $y0 (i32.add (local.get $y0) (i32.const 4))) ;; y0 += 4
       (local.set $y1 (i32.add (local.get $y1) (i32.const 4))) ;; y1 += 4
-      (i32.lt_u (local.get $y0) (i32.const 1000))
+      (i32.lt_u (local.get $y0) (i32.const 5000))
       br_if 0)
-    (call $build_world (i32.const 1000))
+    (call $build_world (i32.const 5000))
     )
 
   (func (export "main") (result i32)
