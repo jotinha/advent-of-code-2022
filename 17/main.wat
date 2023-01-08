@@ -74,13 +74,11 @@
     (local $piece_idx i32)
     (local $move_idx i32)
     (local $piece i32)
-    (local $it i32)
     (local $y i32)
     (local $n i32)
     (local $height i32)
     (local $ntrims i32)
 
-    (local.set $it (i32.const 0))
     (local.set $piece_idx (i32.const 0))
     (local.set $move_idx (i32.const 0))
     (local.set $y (i32.const 4))
@@ -96,11 +94,11 @@
   
     (loop
 
-      ;;(local.set $piece ;; piece = move_wind(it, piece)
-      ;;  (call $move_wind (local.get $it) (local.get $piece)))
+      ;;(local.set $piece ;; piece = move_wind(move_idx, piece)
+      ;;  (call $move_wind (local.get $move_idx) (local.get $piece)))
 
-      (local.set $piece ;; piece = move_wind_unless_hit(it, piece, y)
-        (call $move_wind_unless_hit (local.get $it) (local.get $piece) (local.get $y)))
+      (local.set $piece ;; piece = move_wind_unless_hit(move_idx, piece, y)
+        (call $move_wind_unless_hit (local.get $move_idx) (local.get $piece) (local.get $y)))
 
       (local.set $y (i32.sub (local.get $y) (i32.const 1))) ;; y-- 
 
@@ -137,7 +135,12 @@
           )
         )
         
-      (local.set $it (i32.add (local.get $it) (i32.const 1))) ;;it++
+      (local.set $move_idx (i32.add (local.get $move_idx) (i32.const 1))) ;;move_idx++
+
+      ;; so variables it and pieces_idx don't grow too big
+      (local.set $move_idx (i32.rem_u (local.get $move_idx) (i32.const 40))) ;;move_idx=%40
+      ;;TODO: unhardcode number of moves 40
+      (local.set $piece_idx (i32.rem_u (local.get $piece_idx) (i32.const 5))) ;;piece_idx %= 5
 
       ;;(i32.mul
       ;;  (i32.lt_u (local.get $it) (i32.const 2000))
