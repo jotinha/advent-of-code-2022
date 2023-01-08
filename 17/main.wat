@@ -78,6 +78,7 @@
     (local $y i32)
     (local $n i32)
     (local $height i32)
+    (local $ntrims i32)
 
     (local.set $it (i32.const 0))
     (local.set $piece_idx (i32.const 0))
@@ -85,7 +86,8 @@
     (local.set $y (i32.const 4))
     (local.set $n (i32.const 2022))
     (local.set $height (i32.const 0))
-
+    (local.set $height (i32.const 0))
+    (local.set $ntrims (i32.const 0))
 
     ;;put a temp floor on the world
     (call $place (i32.const 0xFF) (i32.const 0))
@@ -124,6 +126,16 @@
           (local.set $piece (call $getpiece (local.get $piece_idx))) ;; piece=getpiece(piece_idx)
           )
       )
+
+      (if ;; if height > 1010, trim world
+        (i32.gt_u (local.get $height) (i32.const 1900))
+        (then 
+          (call $trim_world) ;; trim_world()
+          (local.set $y (i32.sub (local.get $y) (i32.const 1000))) ;; y -= 1000
+          (local.set $height (i32.sub (local.get $height) (i32.const 1000))) ;; h -= 1000
+          (local.set $ntrims (i32.add (local.get $ntrims) (i32.const 1))) ;; ntrims++
+          )
+        )
         
       (local.set $it (i32.add (local.get $it) (i32.const 1))) ;;it++
 
@@ -136,7 +148,15 @@
       ;; (call $place ;; place(piece, y)
       ;;   (local.get $piece)
       ;;   (local.get $y))
-      (i32.sub (local.get $height) (i32.const 1))
+      
+      local.get $ntrims
+      i32.const 1000
+      i32.mul
+      local.get $height
+      i32.add
+      i32.const 1
+      i32.sub ;; (ntrims*1000) + h - 1
+      
   )
 
   (func $max_u (param i32) (param i32) (result i32)
@@ -160,16 +180,16 @@
     (local $y0 i32)
     (local $y1 i32)
     (local.set $y0 (i32.const 0))
-    (local.set $y1 (i32.const 5000))
+    (local.set $y1 (i32.const 1000))
     (loop 
       (call $setframe 
         (call $getframe (local.get $y1)) 
         (local.get $y0))
       (local.set $y0 (i32.add (local.get $y0) (i32.const 4))) ;; y0 += 4
       (local.set $y1 (i32.add (local.get $y1) (i32.const 4))) ;; y1 += 4
-      (i32.lt_u (local.get $y0) (i32.const 5000))
+      (i32.lt_u (local.get $y0) (i32.const 1000))
       br_if 0)
-    (call $build_world (i32.const 5000))
+    (call $build_world (i32.const 1000))
     )
 
   (func (export "main") (result i32)
