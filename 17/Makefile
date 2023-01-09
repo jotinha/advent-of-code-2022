@@ -1,5 +1,5 @@
 run: main.js bin/main.wasm
-	node $<
+	time node $<
 
 bin/main.wasm: main.wat
 	clear
