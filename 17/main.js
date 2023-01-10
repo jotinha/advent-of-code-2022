@@ -1,6 +1,6 @@
 // Assume add.wasm file exists that contains a single function adding 2 provided arguments
 const fs = require('fs');
-var mem = new WebAssembly.Memory({initial:1});
+var mem = new WebAssembly.Memory({initial:10000});
 
 const moves = fs.readFileSync("test").toString().trim().split("");
 
@@ -22,7 +22,8 @@ let toWasm = {
   js: {
     mem: mem,
     nmoves: new WebAssembly.Global({value: 'i32',mutable:false}, moves.length),
-    world_start: new WebAssembly.Global({value: 'i32', mutable: false}, world_pos[0])
+    world_start: new WebAssembly.Global({value: 'i32', mutable: false}, world_pos[0]),
+    world_size: new WebAssembly.Global({value: 'i32', mutable: false}, world_pos[1] - world_pos[0]),
   }
 }
 console.log(pieces_pos, moves_pos, world_pos)

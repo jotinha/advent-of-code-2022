@@ -2,6 +2,7 @@
   (import "js" "mem" (memory 1))
   (global $nmoves (import "js" "nmoves") i32)
   (global $world_start (import "js" "world_start") i32)
+  (global $world_size (import "js" "world_size") i32)
   
   (func $getpiece (param $i i32) (result i32)
     ;;load((i%5)*4)
@@ -81,7 +82,6 @@
     (local $y i32)
     (local $n i32)
     (local $height i32)
-    (local $ntrims i32)
 
     (local.set $piece_idx (i32.const 0))
     (local.set $move_idx (i32.const 0))
@@ -89,7 +89,6 @@
     (local.set $n (i32.const 1_000_000_00)) ;;1_000_000_000_0000
     (local.set $height (i32.const 0))
     (local.set $height (i32.const 0))
-    (local.set $ntrims (i32.const 0))
 
     ;;put a temp floor on the world
     (call $place (i32.const 0xFF) (i32.const 0))
@@ -130,36 +129,13 @@
           )
       )
 
-      (if ;; if height > 1900, trim world
-        (i32.gt_u (local.get $height) (i32.const 50_984))
-        (then 
-          (call $trim_world) ;; trim_world()
-          (local.set $y (i32.sub (local.get $y) (i32.const 50_000))) ;; y -= 1000
-          (local.set $height (i32.sub (local.get $height) (i32.const 50_000))) ;; h -= 1000
-          (local.set $ntrims (i32.add (local.get $ntrims) (i32.const 1))) ;; ntrims++
-          )
-        )
-        
       (local.set $move_idx (i32.add (local.get $move_idx) (i32.const 1))) ;;move_idx++
-
-      ;;(i32.mul
-      ;;  (i32.lt_u (local.get $it) (i32.const 2000))
-      (local.get $n)
-      br_if 0  ;; loop if it < MAX_ITER and n != 0 
+      
+      local.get $n
+      br_if 0  ;;
       )
 
-      ;; (call $place ;; place(piece, y)
-      ;;   (local.get $piece)
-      ;;   (local.get $y))
-      
-      local.get $ntrims
-      i32.const 50_000
-      i32.mul
-      local.get $height
-      i32.add
-      i32.const 1
-      i32.sub ;; (ntrims*1000) + h - 1
-      
+    (i32.sub (local.get $height) (i32.const 1)) ;; return h -1
   )
 
   (func $max_u (param i32) (param i32) (result i32)
@@ -174,26 +150,9 @@
     (loop ;;do setframe(wall,y); y++ while i < 2000
       (call $setframe (local.get $wall) (local.get $y))
       (local.tee $y (i32.add (local.get $y) (i32.const 4))) ;; y+=1; y
-      (i32.const 60_000)
-      i32.lt_u ;; loop if i < 10_000
+      (i32.sub (global.get $world_size) (i32.const 4))
+      i32.le_u ;; loop if i <= (world_size-4)
       br_if 0))
-
-  (func $trim_world
-    ;;copy n bytes from end to start ;;fill rest with world
-    (local $y0 i32)
-    (local $y1 i32)
-    (local.set $y0 (i32.const 0))
-    (local.set $y1 (i32.const 50_000))
-    (loop 
-      (call $setframe 
-        (call $getframe (local.get $y1)) 
-        (local.get $y0))
-      (local.set $y0 (i32.add (local.get $y0) (i32.const 4))) ;; y0 += 4
-      (local.set $y1 (i32.add (local.get $y1) (i32.const 4))) ;; y1 += 4
-      (i32.lt_u (local.get $y0) (i32.const 1_000))
-      br_if 0)
-    (call $build_world (i32.const 1_000))
-    )
 
   (func (export "main") (result i32)
     (call $build_world (i32.const 0)) ;; init world as just a wall
