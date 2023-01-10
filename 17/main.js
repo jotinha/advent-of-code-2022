@@ -1,12 +1,10 @@
 // Assume add.wasm file exists that contains a single function adding 2 provided arguments
 const fs = require('fs');
 var mem = new WebAssembly.Memory({initial:1});
-const memsize = new WebAssembly.Global({value: 'i32',mutable:false}, 
-  mem.buffer.byteLength)
 
 const moves = fs.readFileSync("test").toString().trim().split("");
-const wasmBuffer = fs.readFileSync('bin/main.wasm');
 
+const wasmBuffer = fs.readFileSync('bin/main.wasm');
 
 function draw_world_at(y) {
   var data = new Uint8Array(mem.buffer, 64);
@@ -16,7 +14,20 @@ function draw_world_at(y) {
   }
 }
 
-WebAssembly.instantiate(wasmBuffer, {js: { mem, memsize }}).then(({instance}) => {
+let pieces_pos = [0,5*4]
+let moves_pos = [pieces_pos[1], pieces_pos[1] + moves.length]
+let world_pos = [moves_pos[1], mem.buffer.byteLength]
+
+let toWasm = {
+  js: {
+    mem: mem,
+    nmoves: new WebAssembly.Global({value: 'i32',mutable:false}, moves.length),
+    world_start: new WebAssembly.Global({value: 'i32', mutable: false}, world_pos[0])
+  }
+}
+console.log(pieces_pos, moves_pos, world_pos)
+
+WebAssembly.instantiate(wasmBuffer, toWasm).then(({instance}) => {
   const pieces = [0b00111100,
     0b00010000_00111000_00010000,
     0b00001000_00001000_00111000,
@@ -25,12 +36,10 @@ WebAssembly.instantiate(wasmBuffer, {js: { mem, memsize }}).then(({instance}) =>
   
   var dataView = new DataView(mem.buffer);
 
-  pieces.forEach((p,i) => dataView.setUint32(i*4, p, true));
-
-  dataView.setUint32(pieces.length*4, moves.length, true);
+  pieces.forEach((p,i) => dataView.setUint32(pieces_pos[0] + i*4, p, true));
 
   moves.forEach((m,i) => 
-    dataView.setUint8((pieces.length+1)*4 + i, m == '<' ? 0 : 1, true));
+    dataView.setUint8(moves_pos[0] + i, m == '<' ? 0 : 1, true));
 
   //var length = instance.exports.memtest();
   //var bytes = new Uint8Array(mem.buffer, 0, length);

@@ -1,8 +1,7 @@
 (module
   (import "js" "mem" (memory 1))
-  (global $memsize (import "js" "memsize") i32)
-  (global $nmoves i32 (i32.const 40))
-  (global $world_start i32 (i32.const 64))
+  (global $nmoves (import "js" "nmoves") i32)
+  (global $world_start (import "js" "world_start") i32)
   
   (func $getpiece (param $i i32) (result i32)
     (i32.rem_u (local.get $i) (i32.const 5)) ;; offset 
@@ -14,8 +13,8 @@
     local.get $i
     global.get $nmoves
     i32.rem_u ;; i % n_moves
-    (i32.add (i32.const 24)) ;; +24
-    i32.load8_u ;; load a byte at offset 24 + i%n_moves
+    (i32.add (i32.const 20)) ;; +20
+    i32.load8_u ;; load a byte at offset 20 + i%n_moves
     return)
   
   (func $getframe (param $y i32) (result i32)
