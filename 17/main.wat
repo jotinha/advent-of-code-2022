@@ -4,19 +4,13 @@
   (global $world_start (import "js" "world_start") i32)
   
   (func $getpiece (param $i i32) (result i32)
-    (i32.rem_u (local.get $i) (i32.const 5)) ;; offset 
-    (i32.mul (i32.const 4)) ;; *4
-    i32.load
-    return)
-
+    (i32.load 
+      (i32.mul (local.get $i) (i32.const 4)))) ;;load(i*4)
+    
   (func $getmove (param $i i32) (result i32)
-    local.get $i
-    global.get $nmoves
-    i32.rem_u ;; i % n_moves
-    (i32.add (i32.const 20)) ;; +20
-    i32.load8_u ;; load a byte at offset 20 + i%n_moves
-    return)
-  
+    (i32.load8_u
+      (i32.add (local.get $i) (i32.const 20)))) ;; load8_u(i+20)
+        
   (func $getframe (param $y i32) (result i32)
     (i32.add (local.get $y) (global.get $world_start))
     i32.load
@@ -120,6 +114,9 @@
 
           (local.set $piece_idx ;;piece_idx++
             (i32.add (local.get $piece_idx) (i32.const 1)))
+          (local.set $piece_idx (i32.rem_u (local.get $piece_idx) (i32.const 5))) ;;piece_idx %= 5
+
+
           (local.set $n ;;n--
             (i32.sub (local.get $n) (i32.const 1)))
           (local.set $piece (call $getpiece (local.get $piece_idx))) ;; piece=getpiece(piece_idx)
@@ -142,7 +139,6 @@
       ;; so variables it and pieces_idx don't grow too big
       (local.set $move_idx (i32.rem_u (local.get $move_idx) (global.get $nmoves))) ;;move_idx=%nmoves
       
-      (local.set $piece_idx (i32.rem_u (local.get $piece_idx) (i32.const 5))) ;;piece_idx %= 5
 
       ;;(i32.mul
       ;;  (i32.lt_u (local.get $it) (i32.const 2000))
