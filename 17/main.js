@@ -1,13 +1,13 @@
 // Assume add.wasm file exists that contains a single function adding 2 provided arguments
 const fs = require('fs');
-var mem = new WebAssembly.Memory({initial:10000});
+var mem = new WebAssembly.Memory({initial:1});
 
-const moves = fs.readFileSync("test").toString().trim().split("");
+const moves = fs.readFileSync("input").toString().trim().split("");
 
 const wasmBuffer = fs.readFileSync('bin/main.wasm');
 
 function draw_world_at(y) {
-  var data = new Uint8Array(mem.buffer, 64);
+  var data = new Uint8Array(mem.buffer, world_pos[0]);
   for (let i=20; i >= 0; i--) {
     let pixels = (data[i] | (1<<8)).toString(2); 
     console.log(pixels.replaceAll('0','.').replaceAll('1','@'))

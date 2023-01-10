@@ -75,18 +75,16 @@
       (local.get $y))
   )
       
-  (func $simulate (result i32)
+  (func $simulate (param $n i32) (result i32)
     (local $piece_idx i32)
     (local $move_idx i32)
     (local $piece i32)
     (local $y i32)
-    (local $n i32)
     (local $height i32)
 
     (local.set $piece_idx (i32.const 0))
     (local.set $move_idx (i32.const 0))
     (local.set $y (i32.const 4))
-    (local.set $n (i32.const 1_000_000_00)) ;;1_000_000_000_0000
     (local.set $height (i32.const 0))
     (local.set $height (i32.const 0))
 
@@ -158,6 +156,8 @@
     (call $build_world (i32.const 0)) ;; init world as just a wall
     ;;(call $place (call $getpiece (i32.const 1)) (i32.const 0))
     ;;(call $max_u (i32.const 0) (i32.const 10))
+    ;;(i32.const 1_000_000_00) ;;1_000_000_000_0000
+    (i32.const 2022)
     call $simulate
     return)
 
