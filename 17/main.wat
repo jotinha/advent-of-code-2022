@@ -3,6 +3,8 @@
   (global $nmoves (import "js" "nmoves") i32)
   (global $world_start (import "js" "world_start") i32)
   (global $world_size (import "js" "world_size") i32)
+  (global $deltas_start (import "js" "deltas_start") i32)
+  (global $deltas_size (import "js" "deltas_size") i32)
   
   (func $getpiece (param $i i32) (result i32)
     ;;load((i%5)*4)
@@ -81,12 +83,13 @@
     (local $piece i32)
     (local $y i32)
     (local $height i32)
+    (local $new_height i32)
+    (local $delta i32)
 
     (local.set $piece_idx (i32.const 0))
     (local.set $move_idx (i32.const 0))
     (local.set $y (i32.const 4))
-    (local.set $height (i32.const 0))
-    (local.set $height (i32.const 0))
+    (local.set $height (i32.const 1))
 
     ;;put a temp floor on the world
     (call $place (i32.const 0xFF) (i32.const 0))
@@ -113,8 +116,14 @@
           (local.set $y  ;; y+=piece_height
             (i32.add (local.get $y) (call $piece_height (local.get $piece))))
           
-          (local.set $height ;; height = max(y,height)
+          (local.set $new_height ;; new_height = max(y,height)
             (call $max_u (local.get $y) (local.get $height)))
+
+          (call $store_delta ;; store_delta(piece_idx, new_height-height)
+            (local.get $piece_idx)
+            (i32.sub (local.get $new_height) (local.get $height)))
+
+          (local.set $height (local.get $new_height)) ;; height = new_height
 
           (local.set $y (i32.add (local.get $height) (i32.const 3))) ;; y=height + 3
 
@@ -136,6 +145,11 @@
     (i32.sub (local.get $height) (i32.const 1)) ;; return h -1
   )
 
+  (func $store_delta (param $n i32) (param $delta i32)
+    (i32.store8  ;; store8(data[n + deltas_start], delta)
+      (i32.add (local.get $n) (global.get $deltas_start))
+      (local.get $delta)))
+
   (func $max_u (param i32) (param i32) (result i32)
     (select 
       (local.get 0) (local.get 1)
@@ -152,12 +166,12 @@
       i32.le_u ;; loop if i <= (world_size-4)
       br_if 0))
 
-  (func (export "main") (result i32)
+  (func (export "main") (param $n i32) (result i32)
     (call $build_world (i32.const 0)) ;; init world as just a wall
     ;;(call $place (call $getpiece (i32.const 1)) (i32.const 0))
     ;;(call $max_u (i32.const 0) (i32.const 10))
     ;;(i32.const 1_000_000_00) ;;1_000_000_000_0000
-    (i32.const 2022)
+    (local.get $n)
     call $simulate
     return)
 
