@@ -1,6 +1,9 @@
 (module
   (import "js" "mem" (memory 1))
   (global $memsize (import "js" "memsize") i32)
+  (global $nmoves i32 (i32.const 40))
+  (global $world_start i32 (i32.const 64))
+  
   (func $getpiece (param $i i32) (result i32)
     (i32.rem_u (local.get $i) (i32.const 5)) ;; offset 
     (i32.mul (i32.const 4)) ;; *4
@@ -9,19 +12,19 @@
 
   (func $getmove (param $i i32) (result i32)
     local.get $i
-    (i32.load (i32.const 20))  ;; n_moves
+    global.get $nmoves
     i32.rem_u ;; i % n_moves
     (i32.add (i32.const 24)) ;; +24
     i32.load8_u ;; load a byte at offset 24 + i%n_moves
     return)
   
   (func $getframe (param $y i32) (result i32)
-    (i32.add (local.get $y) (i32.const 64))  ;; TODO: generalize (world starts at byte 60 for test)
+    (i32.add (local.get $y) (global.get $world_start))
     i32.load
   )
  
   (func $setframe (param $frame i32) (param $y i32)
-    (i32.add (local.get $y) (i32.const 64))  ;; TODO: generalize (world starts at byte 60 for test)
+    (i32.add (local.get $y) (global.get $world_start))
     local.get $frame
     i32.store
   )
@@ -138,8 +141,8 @@
 
       ;; TODO: functions to incrememnt move and piece
       ;; so variables it and pieces_idx don't grow too big
-      (local.set $move_idx (i32.rem_u (local.get $move_idx) (i32.const 40))) ;;move_idx=%40
-      ;;TODO: unhardcode number of moves 40
+      (local.set $move_idx (i32.rem_u (local.get $move_idx) (global.get $nmoves))) ;;move_idx=%nmoves
+      
       (local.set $piece_idx (i32.rem_u (local.get $piece_idx) (i32.const 5))) ;;piece_idx %= 5
 
       ;;(i32.mul
