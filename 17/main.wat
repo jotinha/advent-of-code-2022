@@ -77,7 +77,7 @@
       (local.get $y))
   )
       
-  (func $simulate (param $n i32) (result i32)
+  (func $simulate (export "simulate") (param $n i32) (result i32)
     (local $piece_idx i32)
     (local $move_idx i32)
     (local $piece i32)
@@ -91,7 +91,8 @@
     (local.set $y (i32.const 4))
     (local.set $height (i32.const 1))
 
-    ;;put a temp floor on the world
+    (call $build_world (i32.const 0))
+    ;;put a floor on the world
     (call $place (i32.const 0xFF) (i32.const 0))
 
     (local.set $piece (call $getpiece (local.get $piece_idx))) ;; piece=getpiece(piece_idx)
@@ -165,15 +166,5 @@
       (i32.sub (global.get $world_size) (i32.const 4))
       i32.le_u ;; loop if i <= (world_size-4)
       br_if 0))
-
-  (func (export "main") (param $n i32) (result i32)
-    (call $build_world (i32.const 0)) ;; init world as just a wall
-    ;;(call $place (call $getpiece (i32.const 1)) (i32.const 0))
-    ;;(call $max_u (i32.const 0) (i32.const 10))
-    ;;(i32.const 1_000_000_00) ;;1_000_000_000_0000
-    (local.get $n)
-    call $simulate
-    return)
-
 )    
 

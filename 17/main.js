@@ -48,7 +48,7 @@ WebAssembly.instantiate(wasmBuffer, toWasm).then(({instance}) => {
   //var length = instance.exports.memtest();
   //var bytes = new Uint8Array(mem.buffer, 0, length);
   //var string = new TextDecoder('utf8').decode(bytes);
-  let ans1 = instance.exports.main(2022);
+  let ans1 = instance.exports.simulate(2022);
   draw_world_at(0);
 
   var deltas = new Uint8Array(mem.buffer, deltas_pos[0], 2022) 
