@@ -29,35 +29,40 @@ let toWasm = {
     deltas_size: new WebAssembly.Global({value: 'i32', mutable: false}, deltas_pos[1] - deltas_pos[0])
   }
 }
-console.log(pieces_pos, moves_pos, world_pos, deltas_pos)
+//console.log(pieces_pos, moves_pos, world_pos, deltas_pos)
+
+//initialize data - pieces in the first 20 bytes
+const pieces = [0b00111100,
+  0b00010000_00111000_00010000,
+  0b00001000_00001000_00111000,
+  0b00100000_00100000_00100000_00100000,
+  0b00110000_00110000]
+
+var dataView = new DataView(mem.buffer);
+pieces.forEach((p,i) => dataView.setUint32(pieces_pos[0] + i*4, p, true));
+
+// save moves in the following nmoves bytes
+moves.forEach((m,i) => dataView.setUint8(moves_pos[0] + i, m == '<' ? 0 : 1, true));
+
+function simulate(instance, n) {
+  let y = instance.exports.simulate(n);
+  //draw_world_at(0);
+
+  let deltas = new Uint8Array(mem.buffer, deltas_pos[0], n) 
+  //fs.writeFileSync('deltas.out', deltas);
+
+  console.assert(y == deltas.reduce((acc,x) => acc + x));
+
+  return {y, deltas}
+}
 
 WebAssembly.instantiate(wasmBuffer, toWasm).then(({instance}) => {
-  const pieces = [0b00111100,
-    0b00010000_00111000_00010000,
-    0b00001000_00001000_00111000,
-    0b00100000_00100000_00100000_00100000,
-    0b00110000_00110000]
   
-  var dataView = new DataView(mem.buffer);
+  // solution 1
+  let ans1 = simulate(instance, 2022).y;
+  let ans2 = 0;
 
-  pieces.forEach((p,i) => dataView.setUint32(pieces_pos[0] + i*4, p, true));
-
-  moves.forEach((m,i) => 
-    dataView.setUint8(moves_pos[0] + i, m == '<' ? 0 : 1, true));
-
-  //var length = instance.exports.memtest();
-  //var bytes = new Uint8Array(mem.buffer, 0, length);
-  //var string = new TextDecoder('utf8').decode(bytes);
-  let ans1 = instance.exports.simulate(2022);
-  draw_world_at(0);
-
-  var deltas = new Uint8Array(mem.buffer, deltas_pos[0], 2022) 
-  fs.writeFileSync('deltas.out', deltas);
-
-  let ans1b = deltas.reduce((acc,x) => acc + x);
-  console.assert(ans1 == ans1b)
-  console.log(ans1);
-
+  console.log(`${ans1},${ans2}`);
 
 });
 /*
