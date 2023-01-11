@@ -1,4 +1,3 @@
-all: 
-	@echo TODO,TODO
-
+all: main.lisp
+	sbcl --script $<
 
