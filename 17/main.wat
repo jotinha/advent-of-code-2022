@@ -60,17 +60,6 @@
       (else (i32.shl   (local.get $piece) (i32.const 1))))
   )
 
-  (func $move_wind_unless_hit (param $moveidx i32) (param $piece i32) (param $y i32) (result i32)
-    (local $candidate i32)
-    (local.set $candidate 
-      (call $move_wind (local.get 0) (local.get 1)))
-
-    (if (result i32) ;; return piece if hits_world(candidate,y) else candidate
-      (call $hits_world (local.get $candidate) (local.get $y))
-      (then local.get $piece)
-      (else local.get $candidate))
-  )
-
   (func $place (param $piece i32) (param $y i32)
     (call $setframe 
       (i32.or (local.get $piece) (call $getframe (local.get $y)))
@@ -81,6 +70,7 @@
     (local $piece_idx i32)
     (local $move_idx i32)
     (local $piece i32)
+    (local $candidate i32)
     (local $y i32)
     (local $height i32)
     (local $new_height i32)
@@ -91,20 +81,22 @@
     (local.set $y (i32.const 4))
     (local.set $height (i32.const 1))
 
-    (call $build_world (i32.const 0))
-    ;;put a floor on the world
-    (call $place (i32.const 0xFF) (i32.const 0))
+    call $build_world
 
     (local.set $piece (call $getpiece (local.get $piece_idx))) ;; piece=getpiece(piece_idx)
   
     (loop
 
-      ;;(local.set $piece ;; piece = move_wind(move_idx, piece)
-      ;;  (call $move_wind (local.get $move_idx) (local.get $piece)))
+      ;; try to move sideways with the wind
+      
+      (local.set $candidate ;; candidate = move_wind(move_idx, piece, y)
+        (call $move_wind (local.get $move_idx) (local.get $piece) ))
+      (if  ;; if !hits_world(candidate, y) then piece=candidate
+        (i32.eqz (call $hits_world (local.get $candidate) (local.get $y)))
+        (then (local.set $piece (local.get $candidate))))
 
-      (local.set $piece ;; piece = move_wind_unless_hit(move_idx, piece, y)
-        (call $move_wind_unless_hit (local.get $move_idx) (local.get $piece) (local.get $y)))
-
+      ;; try to move down
+      
       (local.set $y (i32.sub (local.get $y) (i32.const 1))) ;; y-- 
 
       (if 
@@ -131,15 +123,13 @@
           (local.set $piece_idx ;;piece_idx++
             (i32.add (local.get $piece_idx) (i32.const 1)))
 
-          (local.set $n ;;n--
-            (i32.sub (local.get $n) (i32.const 1)))
           (local.set $piece (call $getpiece (local.get $piece_idx))) ;; piece=getpiece(piece_idx)
           )
       )
 
       (local.set $move_idx (i32.add (local.get $move_idx) (i32.const 1))) ;;move_idx++
       
-      local.get $n
+      (i32.lt_u (local.get $piece_idx) (local.get $n))
       br_if 0  ;;
       )
 
@@ -156,15 +146,23 @@
       (local.get 0) (local.get 1)
       (i32.gt_u (local.get 0) (local.get 1))))
     
-  (func $build_world (param $y i32)
+  (func $build_world
     (local $wall i32)
+    (local $floor i32)
+    (local $y i32)
+
     (local.set $wall (i32.const 0x01010101))
+    (local.set $floor (i32.const 0xFF))
+    (local.set $y (i32.const 0))
     
-    (loop ;;do setframe(wall,y); y++ while i < 2000
+    (call $setframe ;; setframe(wall | floor, 0) # add a floor at the first row
+      (i32.or (local.get $wall) (local.get $floor))
+      (i32.const 0))
+    
+    (loop ;;do y+=4; setframe(wall,y); while i < world_size
+      (local.set $y (i32.add (local.get $y) (i32.const 4))) ;; y+=4
       (call $setframe (local.get $wall) (local.get $y))
-      (local.tee $y (i32.add (local.get $y) (i32.const 4))) ;; y+=1; y
-      (i32.sub (global.get $world_size) (i32.const 4))
-      i32.le_u ;; loop if i <= (world_size-4)
+      (i32.le_u (local.get $y) (global.get $world_size)) ;; loop if i <= (world_size-4)
       br_if 0))
 )    
 
