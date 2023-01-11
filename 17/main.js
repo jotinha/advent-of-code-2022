@@ -49,25 +49,63 @@ function simulate(instance, n) {
   //draw_world_at(0);
 
   let deltas = new Uint8Array(mem.buffer, deltas_pos[0], n) 
-  //fs.writeFileSync('deltas.out', deltas);
+  fs.writeFileSync('deltas.out', deltas);
 
-  console.assert(y == deltas.reduce((acc,x) => acc + x));
+  console.assert(y == array_sum(deltas));
 
   return {y, deltas}
+}
+
+function arrays_equal(a,b) {
+  return a.every((aa,i) => aa == b[i]);
+}
+
+function array_sum(a) {
+  return a.reduce((acc,x) => acc+x);
+}
+
+function find_pattern(xs) {
+  let max_size = Math.floor(xs.length/2);
+  let min_size = 100;
+  for(let size=max_size; size >= min_size; size--) {
+    let a = xs.slice(-size);
+    let b = xs.slice(-size*2,-size);
+    if (arrays_equal(a,b)) {
+      return find_pattern(a);
+    }
+  }
+  return xs;
 }
 
 WebAssembly.instantiate(wasmBuffer, toWasm).then(({instance}) => {
   
   // solution 1
   let ans1 = simulate(instance, 2022).y;
-  let ans2 = 0;
+  
+  //solution 2
+  //simulate a large enough size so we can look for a pattern
+  let total_pieces = 1_000_000_000_000;
+  let simulated_pieces = 10_000;
+  let sim = simulate(instance, simulated_pieces)
+  let simulated_height = sim.y;
+  
+  //pattern is the last `pattern_pieces` entries of sim.deltas
+  let pattern = find_pattern(sim.deltas);
+  let pattern_pieces = pattern.length;
+  let pattern_height = array_sum(pattern)
+
+  let initial_pieces = simulated_pieces % pattern_pieces // number of pieces outside of the pattern
+  let initial_height = array_sum(sim.deltas.slice(0,initial_pieces))
+
+  let n_repeats = Math.floor((total_pieces - initial_pieces) / pattern_pieces);
+
+  // We also need to create a tail array with the missing pieces at the end (because our pattern we calculated
+  // wont align neatly with the end, hence the Math.floor on the n_repeats formula)
+  let tail_pieces = (total_pieces - initial_pieces) % pattern_pieces;
+  let tail_height = array_sum(pattern.slice(0, tail_pieces))
+
+  let ans2 = initial_height + n_repeats*pattern_height + tail_height;
 
   console.log(`${ans1},${ans2}`);
 
 });
-/*
-151428577
-15142861
-1514288
-151434
-*/
