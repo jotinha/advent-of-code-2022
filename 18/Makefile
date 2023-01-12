@@ -1,3 +1,7 @@
-all: main.lisp
-	sbcl --script $<
+all: main.clj
+	clojure -M $<	
+
+install:
+	brew install clojure/tools/clojure
+
 
