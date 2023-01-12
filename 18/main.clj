@@ -4,9 +4,9 @@
   (map #(Integer/parseInt %) (str/split line #","))
   )
 
-(def voxels
+(def voxels (set
   (map parse-line
-    (str/split-lines (slurp "test"))))
+    (str/split-lines (slurp "test")))))
 
 (defn inbounds [p]
   (and 
@@ -18,5 +18,13 @@
     (map #(map + p %1) 
       [[1 0 0] [-1 0 0] [0 1 0] [0 -1 0] [0 0 1] [0 0 -1]])))
 
-(print (neighbors '(1 0 0)))
+(defn islava [p]
+  (contains? voxels p))
+
+(def ans1 (  
+  
+  ))
+
+(print (neighbors '(19 0 0)))
+(print (islava '(1 2 2)))
 ;(run! println voxels)
