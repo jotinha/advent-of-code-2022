@@ -16,13 +16,9 @@
   (mapv + p dir))
 
 (defn neighbors [p] (set
-  (filterv inbounds [
-    (move p '(1 0 0))
-    (move p '(-1 0 0))
-    (move p '(0 1 0))
-    (move p '(0 -1 0))
-    (move p '(0 0 1))
-    (move p '(0 0 -1))])))
+  (filterv inbounds
+    (mapv #(move p %)
+      [[1 0 0] [-1 0 0] [0 1 0] [0 -1 0] [0 0 1] [0 0 -1]]))))
 
 (defn count_exposed_faces [v] 
   ;; for each neighbor, if not in the voxels set, it's an exposed face
@@ -32,22 +28,23 @@
 (def ans1   
   (reduce + (map count_exposed_faces voxels)))
 
-(def flooded (atom (set []))) ;; keep track of the positions already flooded
 
 (defn is-lava [p] (contains? voxels p)) 
 (def is-not-lava (complement is-lava))
-(defn is-flooded 
-  ([p] (contains? @flooded p))
-  ([p fs] (contains? fs p)))
+(defn is-flooded [p fs] (contains? fs p))
 (def is-not-flooded (complement is-flooded))
 
 (defn pick-pos-to-flow [neighbs fs]
   (first 
     (filter #(not (or (is-lava %) (is-flooded % fs))) neighbs)))
 
+(defn count_lavas [ps]
+  (count (set/intersection ps voxels)))
+
 (defn flow [p fs]
+  (def ns (neighbors p))
   (cond 
-    (is-lava p) 1
+    (is-lava p) 1 
     (is-flooded p fs) 0
     ;; call flow for first neighbor
     :else (let [ns (neighbors p) fs' (conj fs p)]
@@ -101,9 +98,32 @@
       ;(print stack')
       (recur flooded' stack' result')))))
 
+; state is a hash-map whose keys are voxels and value is an int (number of faces) or :unvisited
+
+; find all keys with value = :unvisited
+(defn get-unvisited [state] 
+  (for [[k v] state :when (= v :unvisited)] k))
+
+; sum all values that are different from :unvisited 
+(defn count-faces [state] 
+  (reduce +
+    (for [[k v] state :when (not (= v :unvisited))] v)))
+
+; add neighbors to state as :unvisited unless they are already there
+(defn extend-state [state neighbs] 
+  (reduce (fn [s n] (if (s n) s (assoc s n :unvisited)))
+    (cons state neighbs)))
+
 (def ans2 
-  (flow4))
-  ;(flow3 #{[0 0 0]} #{} 0))
+  (count-faces 
+  (loop [state {[0,0,0] :unvisited}]
+    (def p (first (get-unvisited state)))
+    (def ps (neighbors p))
+    (if (nil? p) state ; no more places left to visit
+     (recur (->
+        state
+        (assoc p (count (filter is-lava ps))) ; state[p] = len(filter(is-lava,neighbors(p)))
+        (extend-state (filter is-not-lava ps))))))))
 
 ;;(print (neighbors '(19 0 0)))
 ;;(run! println voxels)
