@@ -1,4 +1,2 @@
-all: 
-	@echo TODO,TODO
-
-
+all: main.lua
+	lua $<
