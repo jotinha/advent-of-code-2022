@@ -76,12 +76,32 @@ function is_valid(state)
   return (state.time > 0) and no_negatives(state.minerals)
 end
 
+function is_useful(move,state, bp)
+  return is_valid(state) and 
+         not (move == 0 and state.time <= 1) and -- no point building if we wont have time to harvest
+         not ((move==1 or move==3) and state.time <= 3) and -- if we build ore/obsidian at -3 we wont have time to harvest extra geode
+         (move == 0 or robot_is_worth_building(move, state, bp))
+end
+
+function robot_is_worth_building(move, state, bp)
+  if move == 4 then return true end -- could always use a geode robot it we can make it
+  
+  -- we don't need to make a robot if we have enough robots to replentish that material for any move
+  local t = types[move]
+  -- TODO
+  return true
+end        
+
 function score(state)
   return (state.minerals.geode or 0) + (state.robots.geode or 0)*state.time
 end
 
 function max(a,b)
   if a > b then return a else return b end
+end
+
+function upper_bound(state)
+  return score(state) + state.time*(state.time -1) //2
 end
 
 function show(t)
@@ -109,22 +129,32 @@ function solve(bp, t)
  
     local state = table.remove(open)
     local s = score(state)
-    best = max(best, s) 
+    --best = max(best, s) 
+    if s > best then
+      show_state(state)
+      print("score:", s)
+      best = s
+    end
 
     if (it % 100000 == 0) then 
-      print(it,#open, best, state.time) 
-      show_state(state)
-      print("score", s)
+      print(it,#open, state.time, best) 
+      --show_state(state)
+      --print("score", s)
     end
-    if (it > 1000000) then break end
+    --if (it > 20000000) then break end
 
-    for move = 0,4 do 
-      local next = next_state(state, move, bp)
-      if is_valid(next) then
-        table.insert(open, next) 
-      end
+    if upper_bound(state) > best then 
+        for move = 0,4 do 
+          local next = next_state(state, move, bp)
+          --if is_useful(move,next,bp) then
+          if is_valid(next) then
+            table.insert(open, next) 
+          end
+        end
+      end 
     end
-  end 
+    print("Found best result ("..best..") in "..it.." iterations")
+    return best
 end
 
 bps = read_blueprints("test") 
@@ -132,4 +162,4 @@ bps = read_blueprints("test")
   print(i,bp)
 end]]
 
-solve(bps[1],24)
+solve(bps[1],20)
