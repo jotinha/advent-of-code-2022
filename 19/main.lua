@@ -10,7 +10,8 @@ function read_blueprints(fname)
 end
 
 function parseline(s)
-  local m = string.gmatch(s,"([0-9]+)")
+  local matches = string.gmatch(s,"([0-9]+)")
+  local m = function() return tonumber(matches()) end
   local idx = m()
   return {
     {m(),0,0,0},
