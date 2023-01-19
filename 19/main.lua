@@ -11,6 +11,7 @@ end
 
 function parseline(s)
   local m = string.gmatch(s,"([0-9]+)")
+  local idx = m()
   return {
     ore={ore=m()},
     clay={ore=m()},
