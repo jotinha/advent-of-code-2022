@@ -46,8 +46,8 @@ function next_state(state, i, bp)
       new_state.minerals[j] = new_state.minerals[j] - bp[i][j]
      -- this may lead to invalid states, because we need to have enough minerals at the start of the round
       if new_state.minerals[j] < 0 then
-        --return nil  
-        new_state.invalid = true
+        return nil  
+        --new_state.invalid = true
       end 
    end
    -- create robot
@@ -73,11 +73,33 @@ function is_valid(state)
   return (state.time >= 0) and no_negatives(state.minerals)
 end
 
-function is_useful(move,state, bp)
-  return is_valid(state) and 
-         not (move == 0 and state.time <= 1) and -- no point building if we wont have time to harvest
-         not ((move==1 or move==3) and state.time <= 3) and -- if we build ore/obsidian at -3 we wont have time to harvest extra geode
-         (move == 0 or robot_is_worth_building(move, state, bp))
+function max_of_mineral_needed_to_build_anything(mineral_i, bp)
+  local i
+  local m = 0
+  for i=1,4 do
+    m = math.max(m,bp[i][mineral_i])
+  end
+  return m
+end
+
+function is_useful(move,state, bp)  
+  -- FIXME this uses the next state, so the time has already been discounted
+
+  if (move > 0 and state.time <= 1) then return false end -- no point in building
+
+  -- always useful to build geodes
+  if (move==4) then return true end 
+ 
+   -- if we build ore/obsidian at -3 we wont have time to harvest extra geode
+  if ((move==1 or move==3) and state.time <= 3) then return false end
+
+  -- build clay at -5,harvest clay at -4, build obsidian at -3, harvest at -2, build geode at -1, can't harvest
+  if (move == 2 and state.time <=5) then return false end
+
+  -- we dont need a move that make a robot if we have enough of that robot to replentish the mineral everytime
+  if move > 0 and state.robots[move] >= max_of_mineral_needed_to_build_anything(move,bp) then return false end
+
+  return true
 end
 
 function robot_is_worth_building(move, state, bp)
@@ -115,12 +137,29 @@ function show_state(state)
   print("time left: ", state.time) 
 end
 
+function improves_previously_seen(closed, state, score)
+  local rs = state.robots[1]..','..state.robots[2]..','..state.robots[3]..','..
+           state.minerals[1]..','..state.minerals[2]..','..state.minerals[3]
+
+  if (closed[rs] == nil) then
+    closed[rs] = score
+    closed.size = closed.size + 1
+    return true
+  elseif (score > closed[rs]) then
+    closed[rs] = score
+    return true
+  else
+    return false
+  end
+end
+
 function solve(bp, t)
   local start_state = {robots={1,0,0,0}, minerals={0,0,0,0}, time=t}
   local open = {start_state}
   local best = 0
   local move
   local it = 0;
+  local closed = {size=0}
   
   while #open > 0 do
     it = it +1
@@ -134,23 +173,24 @@ function solve(bp, t)
       best = s
     end]]
 
-    if (it % 100000 == 0) then 
-      print(it,#open, state.time, best) 
+    --[[if (it % 100000 == 0) then 
+      print(it,#open, closed.size, state.time, best) 
       --show_state(state)
       --print("score", s)
-    end
+    end]]
     --if (it > 20000000) then break end
 
-    if state.time > 0 and upper_bound(state) > best then 
+    if state.time > 0 and improves_previously_seen(closed, state, s) and upper_bound(state) > best then
         --show_state(state)
         for move = 0,4 do
           local next = next_state(state, move, bp)
-          --if is_useful(move,next,bp) then
           --if is_valid(next) then
-          if not next.invalid then
+          if next ~= nil then
             --print("doing move "..move)
             --show_state(next)
-            table.insert(open, next) 
+            if is_useful(move,state,bp) then
+              table.insert(open, next) 
+            end
           else
             --[[if move == 2 then
               print("\ncan't do move ".. move)
@@ -176,7 +216,18 @@ function show_blueprint(bp)
   end 
 end
 
-bps = read_blueprints("test") 
-show_blueprint(bps[1])
-solve(bps[1],24)
+bps = read_blueprints("input") 
+--show_blueprint(bps[2])
+--solve(bps[2],24)
+bps2 = {}; for k=1,3 do bps2[k] = bps[k] end
+ans1 = 0 --solve(bps[3],24) 
+ans2 = 1
+for k,bp in pairs(bps) do
+  --print(k, solve(bp,24))
+  ans1 = ans1 + k*solve(bp,24)
+  if k >= 1 and k <= 3 then
+    ans2 = ans2*solve(bp,32)
+  end
+end
+print(ans1..","..ans2)
 
