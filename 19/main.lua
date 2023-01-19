@@ -13,18 +13,17 @@ function parseline(s)
   local m = string.gmatch(s,"([0-9]+)")
   local idx = m()
   return {
-    ore={ore=m()},
-    clay={ore=m()},
-    obsidian={ore=m(),clay=m()},
-    geode={ore=m(), obsidian=m()}
+    {m(),0,0,0},
+    {m(),0,0,0},
+    {m(),m(),0,0},
+    {m(), 0, m(),0}
   }
 end
 
 function clone_amounts(a)
-  if a == nil then return nil end
-
   local b = { }
-  for k, v in pairs(a) do b[k] = v end
+  local i
+  for k=1,4 do b[k] = a[k] end
   return b  
 end
 
@@ -35,33 +34,29 @@ function clone_state(state)
       time=state.time}
 end
 
-types = {"ore","clay","obsidian","geode"}
-
-function next_state(state, move_idx, bp)
-  local j, ti, tj
+function next_state(state, i, bp)
+  local j
   local new_state = clone_state(state) 
 
   new_state.time = new_state.time - 1
-
-  if move_idx > 0 then -- move_idx = 0 means just wait 
-    ti = types[move_idx]
-    
-    -- create robot
-    new_state.robots[ti] = (new_state.robots[ti] or 0) + 1
-
+  if i > 0 then -- i = 0 means just wait
     for j=1,4 do
-      tj = types[j]
-      
-      -- consume minerals according to blueprint
-      if bp[ti][tj] ~= nil then
-        new_state.minerals[tj] = (new_state.minerals[types[tj]] or 0) - bp[ti][tj]
-      end
-    
-      -- harvest minerals
-      new_state.minerals[tj] = (new_state.minerals[tj] or 0) + (state.robots[tj] or 0)
-    end
-
+      -- consume minerals according to blueprint 
+      new_state.minerals[j] = new_state.minerals[j] - bp[i][j]
+     -- this may lead to invalid states, because we need to have enough minerals at the start of the round
+      if new_state.minerals[j] < 0 then
+        --return nil  
+        new_state.invalid = true
+      end 
    end
+   -- create robot
+   new_state.robots[i] = new_state.robots[i] + 1
+   
+  end
+  for j=1,4 do
+      -- harvest 
+      new_state.minerals[j] = new_state.minerals[j] + state.robots[j]
+  end
   
   return new_state
 end
@@ -74,7 +69,7 @@ function no_negatives(t)
 end
 
 function is_valid(state)
-  return (state.time > 0) and no_negatives(state.minerals)
+  return (state.time >= 0) and no_negatives(state.minerals)
 end
 
 function is_useful(move,state, bp)
@@ -88,13 +83,12 @@ function robot_is_worth_building(move, state, bp)
   if move == 4 then return true end -- could always use a geode robot it we can make it
   
   -- we don't need to make a robot if we have enough robots to replentish that material for any move
-  local t = types[move]
   -- TODO
   return true
 end        
 
 function score(state)
-  return (state.minerals.geode or 0) + (state.robots.geode or 0)*state.time
+  return state.minerals[4] + state.robots[4]*state.time
 end
 
 function max(a,b)
@@ -105,24 +99,26 @@ function upper_bound(state)
   return score(state) + state.time*(state.time -1) //2
 end
 
-function show(t)
-  for k,v in pairs(t) do
-    print("-",k,v)
+function show_amounts(name,t)
+  local i
+  io.write(name..": ")
+  for i=1,4 do
+    io.write(t[i]..",")
   end
+  io.write("\n")
 end
 function show_state(state)
-  print("robots")
-  show(state.robots)
-  print("minerals")
-  show(state.minerals)
+  if state.invalid then print("INVALID") end
+  show_amounts("robots",state.robots)
+  show_amounts("minerals", state.minerals)
   print("time left: ", state.time) 
 end
 
 function solve(bp, t)
-  local start_state = {robots={ore=1}, minerals={}, time=t}
+  local start_state = {robots={1,0,0,0}, minerals={0,0,0,0}, time=t}
   local open = {start_state}
   local best = 0
-
+  local move
   local it = 0;
   
   while #open > 0 do
@@ -130,12 +126,12 @@ function solve(bp, t)
  
     local state = table.remove(open)
     local s = score(state)
-    --best = max(best, s) 
-    if s > best then
+    best = max(best, s) 
+    --[[if s > best then
       show_state(state)
       print("score:", s)
       best = s
-    end
+    end]]
 
     if (it % 100000 == 0) then 
       print(it,#open, state.time, best) 
@@ -144,23 +140,42 @@ function solve(bp, t)
     end
     --if (it > 20000000) then break end
 
-    if upper_bound(state) > best then 
-        for move = 0,4 do 
+    if state.time > 0 and upper_bound(state) > best then 
+        --show_state(state)
+        for move = 0,4 do
           local next = next_state(state, move, bp)
           --if is_useful(move,next,bp) then
-          if is_valid(next) then
+          --if is_valid(next) then
+          if not next.invalid then
+            --print("doing move "..move)
+            --show_state(next)
             table.insert(open, next) 
-          end
+          else
+            --[[if move == 2 then
+              print("\ncan't do move ".. move)
+              show_state(state)
+              print("to")
+              show_state(next)
+              print("")
+            end]]
+          end 
         end
       end 
+      --break
     end
     print("Found best result ("..best..") in "..it.." iterations")
     return best
 end
 
-bps = read_blueprints("test") 
---[[for i,bp in pairs(bps) do 
-  print(i,bp)
-end]]
+function show_blueprint(bp)
+  local i
+  print("blueprint")
+  for i=1,4 do
+    show_amounts("\t"..i,bp[i])
+  end 
+end
 
-solve(bps[1],20)
+bps = read_blueprints("test") 
+show_blueprint(bps[1])
+solve(bps[1],24)
+
