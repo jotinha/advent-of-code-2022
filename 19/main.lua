@@ -28,7 +28,6 @@ function clone_amounts(a)
   return b  
 end
 
-  
 function clone_state(state)
   return {robots=clone_amounts(state.robots),
       minerals=clone_amounts(state.minerals),
@@ -44,10 +43,10 @@ function next_state(state, i, bp)
     for j=1,4 do
       -- consume minerals according to blueprint 
       new_state.minerals[j] = new_state.minerals[j] - bp[i][j]
-     -- this may lead to invalid states, because we need to have enough minerals at the start of the round
+      
+      -- this may lead to invalid states, because we need to have enough minerals at the start of the round
       if new_state.minerals[j] < 0 then
         return nil  
-        --new_state.invalid = true
       end 
    end
    -- create robot
@@ -60,17 +59,6 @@ function next_state(state, i, bp)
   end
   
   return new_state
-end
-
-function no_negatives(t)
-  for k,v in pairs(t) do
-    if v < 0 then return false end
-  end
-  return true
-end
-
-function is_valid(state)
-  return (state.time >= 0) and no_negatives(state.minerals)
 end
 
 function max_of_mineral_needed_to_build_anything(mineral_i, bp)
@@ -127,25 +115,33 @@ function show_amounts(name,t)
   end
   io.write("\n")
 end
+
 function show_state(state)
-  if state.invalid then print("INVALID") end
   show_amounts("robots",state.robots)
   show_amounts("minerals", state.minerals)
   print("time left: ", state.time) 
+end
+
+function show_blueprint(bp)
+  local i
+  print("blueprint")
+  for i=1,4 do
+    show_amounts("\t"..i,bp[i])
+  end 
 end
 
 function improves_previously_seen(closed, state, score)
   local rs = state.robots[1]..','..  state.robots[2]..','..  state.robots[3]..','..  state.robots[4]..","..
            state.minerals[1]..','..state.minerals[2]..','..state.minerals[3]..','..state.minerals[4]
   
-  score = state.time  
+  local s= state.time  
  
   if (closed[rs] == nil) then
-    closed[rs] = score
+    closed[rs] = s 
     closed.size = closed.size + 1
     return true
-  elseif (score > closed[rs]) then
-    closed[rs] = score
+  elseif (s > closed[rs]) then
+    closed[rs] = s 
     return true
   else
     return false
@@ -165,60 +161,27 @@ function solve(bp, t)
  
     local state = table.remove(open)
     local s = score(state)
+    
     best = math.max(best, s) 
-    --[[if s > best then
-      show_state(state)
-      print("score:", s)
-      best = s
-    end]]
 
-    if (it % 100000 == 0) then 
-      --print(it,#open, closed.size, state.time, best) 
-      --show_state(state)
-      --print("score", s)
-    end
-    --if (it > 20000000) then break end
-    -- 
+    --if (it % 100000 == 0) then print(it,#open, closed.size, state.time, best) end 
+    
     if state.time > 0 and upper_bound(state) >= best and improves_previously_seen(closed, state, s) then
-        --show_state(state)
         for move = 0,4 do
           local next = next_state(state, move, bp)
-          if next ~= nil then
-            --print("doing move "..move)
-            --show_state(next)
-            if is_useful(move,state,bp) then
+          if next ~= nil and is_useful(move,state,bp) then
               table.insert(open, next) 
-            end
-          else
-            --[[if move == 2 then
-              print("\ncan't do move ".. move)
-              show_state(state)
-              print("to")
-              show_state(next)
-              print("")
-            end]]
-          end 
+          end
         end
       end 
-      --break
     end
     print("Found best result ("..best..") in "..it.." iterations")
     return best
 end
 
-function show_blueprint(bp)
-  local i
-  print("blueprint")
-  for i=1,4 do
-    show_amounts("\t"..i,bp[i])
-  end 
-end
-
 bps = read_blueprints("input") 
---show_blueprint(bps[2])
---solve(bps[2],24)
 bps2 = {}; for k=1,3 do bps2[k] = bps[k] end
-ans1 = 0 -- solve(bps[3],32) 
+ans1 = 0
 ans2 = 1
 for k,bp in pairs(bps) do
   ans1 = ans1 + k*solve(bp,24)
