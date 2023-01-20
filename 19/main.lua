@@ -83,8 +83,6 @@ function max_of_mineral_needed_to_build_anything(mineral_i, bp)
 end
 
 function is_useful(move,state, bp)  
-  -- FIXME this uses the next state, so the time has already been discounted
-
   if (move > 0 and state.time <= 1) then return false end -- no point in building
 
   -- always useful to build geodes
@@ -96,26 +94,25 @@ function is_useful(move,state, bp)
   -- build clay at -5,harvest clay at -4, build obsidian at -3, harvest at -2, build geode at -1, can't harvest
   if (move == 2 and state.time <=5) then return false end
 
-  -- we dont need a move that make a robot if we have enough of that robot to replentish the mineral everytime
-  if move > 0 and state.robots[move] >= max_of_mineral_needed_to_build_anything(move,bp) then return false end
+  if (move > 0) then
+    local m = max_of_mineral_needed_to_build_anything(move,bp) 
+    
+    -- we dont need a move that make a robot if we have enough of that robot to replentish the mineral everytime
+    if state.robots[move] >= m then return false end 
 
+    -- we don't need to make a robot if we can't possibly spend the mineral we have/will have until the end
+    -- FIXME this condition doesn't work well
+    --if amount_until_end(state, move) > m then return false end 
+  end
   return true
 end
 
-function robot_is_worth_building(move, state, bp)
-  if move == 4 then return true end -- could always use a geode robot it we can make it
-  
-  -- we don't need to make a robot if we have enough robots to replentish that material for any move
-  -- TODO
-  return true
-end        
+function amount_until_end(state, t)
+  return state.minerals[t] + state.robots[t]*state.time
+end
 
 function score(state)
-  return state.minerals[4] + state.robots[4]*state.time
-end
-
-function max(a,b)
-  if a > b then return a else return b end
+  return amount_until_end(state,4)
 end
 
 function upper_bound(state)
@@ -138,9 +135,11 @@ function show_state(state)
 end
 
 function improves_previously_seen(closed, state, score)
-  local rs = state.robots[1]..','..state.robots[2]..','..state.robots[3]..','..
-           state.minerals[1]..','..state.minerals[2]..','..state.minerals[3]
-
+  local rs = state.robots[1]..','..  state.robots[2]..','..  state.robots[3]..','..  state.robots[4]..","..
+           state.minerals[1]..','..state.minerals[2]..','..state.minerals[3]..','..state.minerals[4]
+  
+  score = state.time  
+ 
   if (closed[rs] == nil) then
     closed[rs] = score
     closed.size = closed.size + 1
@@ -166,25 +165,24 @@ function solve(bp, t)
  
     local state = table.remove(open)
     local s = score(state)
-    best = max(best, s) 
+    best = math.max(best, s) 
     --[[if s > best then
       show_state(state)
       print("score:", s)
       best = s
     end]]
 
-    --[[if (it % 100000 == 0) then 
-      print(it,#open, closed.size, state.time, best) 
+    if (it % 100000 == 0) then 
+      --print(it,#open, closed.size, state.time, best) 
       --show_state(state)
       --print("score", s)
-    end]]
+    end
     --if (it > 20000000) then break end
-
-    if state.time > 0 and improves_previously_seen(closed, state, s) and upper_bound(state) > best then
+    -- 
+    if state.time > 0 and upper_bound(state) >= best and improves_previously_seen(closed, state, s) then
         --show_state(state)
         for move = 0,4 do
           local next = next_state(state, move, bp)
-          --if is_valid(next) then
           if next ~= nil then
             --print("doing move "..move)
             --show_state(next)
@@ -220,10 +218,9 @@ bps = read_blueprints("input")
 --show_blueprint(bps[2])
 --solve(bps[2],24)
 bps2 = {}; for k=1,3 do bps2[k] = bps[k] end
-ans1 = 0 --solve(bps[3],24) 
+ans1 = 0 -- solve(bps[3],32) 
 ans2 = 1
 for k,bp in pairs(bps) do
-  --print(k, solve(bp,24))
   ans1 = ans1 + k*solve(bp,24)
   if k >= 1 and k <= 3 then
     ans2 = ans2*solve(bp,32)
