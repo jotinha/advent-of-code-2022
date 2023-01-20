@@ -167,7 +167,7 @@ function solve(bp, t)
 
     --if (it % 100000 == 0) then print(it,#open, closed.size, state.time, best) end 
     if state.time > 0 and 
-       upper_bound(state) >= best and 
+       upper_bound(state) > best and 
        improves_previously_seen(closed, state, s) then
         for move = 0,4 do
           local next = next_state(state, move, bp)
@@ -177,7 +177,7 @@ function solve(bp, t)
         end
       end 
     end
-    print("Found best result ("..best..") in "..it.." iterations")
+    --print("Found best result ("..best..") in "..it.." iterations")
     return best
 end
 
