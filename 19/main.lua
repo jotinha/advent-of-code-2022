@@ -89,8 +89,8 @@ function is_useful(move,state, bp)
     if state.robots[move] >= m then return false end 
 
     -- we don't need to make a robot if we can't possibly spend the mineral we have/will have until the end
-    -- FIXME this condition doesn't work well
-    --if amount_until_end(state, move) > m then return false end 
+    
+    if amount_until_end(state, move) > m*state.time then return false end 
   end
   return true
 end
@@ -104,6 +104,7 @@ function score(state)
 end
 
 function upper_bound(state)
+  -- assuming infinite resources to build one geode machine until the end of time
   return score(state) + state.time*(state.time -1) //2
 end
 
@@ -165,8 +166,9 @@ function solve(bp, t)
     best = math.max(best, s) 
 
     --if (it % 100000 == 0) then print(it,#open, closed.size, state.time, best) end 
-    
-    if state.time > 0 and upper_bound(state) >= best and improves_previously_seen(closed, state, s) then
+    if state.time > 0 and 
+       upper_bound(state) >= best and 
+       improves_previously_seen(closed, state, s) then
         for move = 0,4 do
           local next = next_state(state, move, bp)
           if next ~= nil and is_useful(move,state,bp) then
