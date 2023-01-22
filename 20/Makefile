@@ -1,4 +1,6 @@
-all: 
-	@echo TODO,TODO
+all: main.fth
+	gforth $< -e bye 
 
+install:
+	brew install gforth
 
