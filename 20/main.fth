@@ -1,43 +1,21 @@
-variable ns
-5000 constant size
-
-: addr-- ( addr -- addr' ) 1 cells - ;
-: array-init ( n addr -- ) 1 + cells allot ;
-: array-push ( x1..xn n addr -- ) 
-    over \ x1..xn n addr n
-    cells + \ x1..xn n addr'=addr+(n cells) 
-    swap \ x1..xn addr' n
-    0 do \ x1..xn addr
-        tuck \ x1..xn-1 addr xn addr
-        ! \ x1..xn-1 addr 
-        addr--
-    loop ;
-
-: ns-put ( v i -- ) 
-    tuck \ i v i
-    cells ns + ! \ i
-    dup size + \ (i i + size)
-    cells ns + ! 
+\ loads the data file and pushes it to stack, last value pushed is total number of lines
+: read-numbers-file ( c-addr -- x1...xn cnt)
+    r/o open-file throw ( fid ) 
+    0 swap ( cnt=0 fid) 
+    begin
+        dup ( cnt fid fid ) 
+        pad 20 rot ( cnt fid c-str u fid )
+        read-line throw ( cnt fid nchars not-eof-flag )
+    while ( cnt fid nchars )
+        pad swap ( cnt fid c-addr nchars )
+        s>number? ( cnt fid d1 d2 f ) 
+        2drop ( cnt fid d1 ) \ we just want the first part of the double precision number
+        rot 1 + ( fid d1 cnt+1)
+        rot ( d1 cnt fid )
+    repeat
+    drop ( x1...xn cnt fid)
+    close-file throw ( x1..xn cnt)
     ;
-
-: ns-get ( i -- v idx)
-    dup \ i i
-    cells ns + @ \ i v
-    swap \ v i
-    5000 +
-    cells ns + @
-    ;
-
-: fill-ns 
-    dup \ x1..xn n n
-    ns ! \ x1..xn n
-    0 do \ x1..xn
-        ns i cells + !
-    loop ; 
-
-\ variable ns 7 cells allot \ initialize array
-\ 1 2 -3 3 -2 0 4
-\ 7 ns array-push 
-
-\ : show-ns  0 do ns i cells + ? loop ;
-\ 7 show-ns
+ 
+s" test" read-numbers-file
+.s CR
