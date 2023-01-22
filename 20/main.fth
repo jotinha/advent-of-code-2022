@@ -18,4 +18,31 @@
     ;
  
 s" test" read-numbers-file
-.s CR
+constant size
+
+\ implements a double linked list. Each entry is a tuple of
+\ * value
+\ * index of previous value
+\ * index of next value
+
+variable ll 
+size 3 * cells allot 
+
+: addr ( i -- addr ) 3 * cells ll + ;
+: val ( i -- val) addr @ ;
+
+: preva ( i -- addr) addr 1 cells + ;
+: nexta ( i -- addr) addr 2 cells + ;
+
+: previ ( i -- i ) preva @ ; 
+: nexti ( i -- i ) nexta @ ; 
+
+: ll-init ( x1..xn -- )
+    size 0 do
+        size i - 1 - addr !  \ put x at position size -i -1 (because the stack is inverted)
+        i 1 - size mod i preva ! \ put i-1 % size at index i
+        i 1 + size mod i nexta ! \ put i+1 % size at index i
+    loop ;
+
+ll-init
+
