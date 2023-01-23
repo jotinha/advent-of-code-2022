@@ -50,4 +50,37 @@ size 3 * cells allot
         . ." <- " . ." -> " . cr
     loop ;
 
+: memswap ( addr1 addr2 -- ) 
+    2dup ( addr1 addr2 addr1 addr2 )
+    @ swap @ swap ( addr1 addr2 val1 val2)
+    rot rot ( addr1 val2 addr2 val1)
+    swap ! swap !
+    ;
 
+\ swap positions i j in linked list
+\ this is accomplished by swapping the prev and next values between positions i and j
+: ll-swap ( i j -- )
+    2dup
+    preva swap preva swap memswap \ memswap(preva(i), preva(j)) 
+    nexta swap nexta swap memswap \ memswap(nexta(i), nexta(j)) 
+    ;    
+
+\ move entry at position i one to the right
+: ll-move-one-right ( i -- )
+    dup nexti ( i j=nexti)
+    ll-swap
+    ;
+: ll-move-one-left ( i -- )
+    dup previ ( i j=previ )
+    .s
+    ll-swap
+    ;
+    
+ll-init
+ll-show
+3 ll-move-one-right
+." swapped once" cr
+ll-show
+3 ll-move-one-left
+." swapped back" cr
+ll-show
