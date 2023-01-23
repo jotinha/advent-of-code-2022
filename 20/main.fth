@@ -85,6 +85,46 @@ size 3 * cells allot
 : surround ( i -- i.preva i.nexta)
     dup preva swap nexta ;
 
+\ remove item at position i
+\ di.prev.next = di.next
+\ di.next.prev = di.prev
+: ll-remove ( i -- ) 
+    dup dup nexti ( i i di.nexti)
+    swap previ ( i di.nexti di.previ )
+    nexta ( i di.nexti di.prev.next) 
+    ! ( i ) \ di.prev.next = di.next
+    dup previ ( i di.previ )
+    swap nexti ( di.previ di.nexti )
+    preva ( d.previ di.next.prev)
+    ! ( ) \ di.next.prev = di.previ
+    ;
+
+\ insert item j after item at index i (forward links only)
+\ i k -> i j k
+\ dj.next = di.next (=k)
+\ di.next = j
+
+: llf-insert ( i j -- )
+    over nexti ( i j di.nexti)
+    over nexta ( i j di.nexti dj.next)
+    ! ( i j ) \ dj.next = di.nexti
+    swap nexta ( j di.next ) 
+    ! ( ) \ di.next = j
+    ;
+
+\ same as llf-insert, but update backwards links only
+\ i k -> i j k
+\ dj.prev = i
+\ di.next.prev = j
+: llb-insert ( i j -- )
+    2dup ( i j i j )
+    preva ! ( i j) \ dj.prev = i
+    swap nexti preva ( j di.next.prev )
+    !
+    ;
+
+: ll-insert ( i j -- ) 2dup llf-insert llb-insert ;
+
 \ swap positions i j in linked list
 \ di = data[i]; dj = data[j] 
 \ di.prev.next = j
@@ -116,9 +156,11 @@ size 3 * cells allot
     ! ( i j ) \ di.prev = j
     drop drop ;
 
-\ swap positions using only the forward links (don't update backlinks)
-\ data[data[i].prev].next = j
-\ data[i]
+\ move item at position s to position after item t
+: ll-move-to ( s t )
+    over ll-remove ( s t ) \ ll-remove(s)
+    swap ll-insert \ ll-insert(t, s) 
+    ;
 
 \ move entry at position i one to the right
 : ll-move-one-right ( i -- )
@@ -130,20 +172,33 @@ size 3 * cells allot
     swap ll-swap
     ;
 
-\ : ll-move-n-right (i n -- )
+: ll-move-nright ( i n -- )
+    over swap ( i i n )
+    ll-findi-nright ( i j=ll-findi-nright(i,n))
+    ll-swap ;
+
+: mix ( -- )
+    size 0 do
+        i dup val ( i val)
+        size mod ( i val%size)
+        ll-move-nright
+    loop ; 
     
+: ls clearstack ll-walkvaluesf .s cr clearstack ;
 
 ll-init
-ll-walkvaluesf .s clearstack
-ll-walkvaluesb .s clearstack
-cr ." val 3 to the right=" 0 3 ll-findi-nright . cr
+ls
+\ 1 ll-remove
+\ ls
+\ ll-walkvaluesb .s clearstack
+\ cr ." val 3 to the right=" 0 3 ll-findi-nright . cr
 
-cr ." 0 is at mem idx="  ll-find0 . cr
+\ cr ." 0 is at mem idx="  ll-find0 . cr
 
-3 ll-move-one-right
-3 ll-move-one-right
-." swapped twice"
-ll-walkvaluesf .s clearstack
-ll-walkvaluesb .s clearstack
-cr ." idx if we move 3 to the right=" 0 3 ll-findi-nright . cr
-cr ." 0 is at mem idx="  ll-find0 . cr
+\ \3 2 ll-move-nright
+\ ." swapped twice"
+\ ll-walkvaluesf .s clearstack
+\ ll-walkvaluesb .s clearstack
+\ cr ." idx if we move 3 to the right=" 0 3 ll-findi-nright . cr
+\ cr ." 0 is at mem idx="  ll-find0 . cr
+
