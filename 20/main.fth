@@ -57,13 +57,68 @@ size 3 * cells allot
     swap ! swap !
     ;
 
+: ll-walkvaluesf ( -- x1...xn)
+    0 ( k = 0)
+    size 0 do
+        dup ( k k)
+        val swap ( val k )
+        nexti ( val data[k].nexti )
+    loop drop ;
+
+\ same but walk in backwards direction (still starts at index 0)
+: ll-walkvaluesb ( -- x1...xn ) 0 size 0 do dup val swap previ loop drop ;
+
+\ find the index i n places to the right of entry at j
+: ll-findi-nright ( j n -- idx )
+    0 do ( j ) \ for i=0:size
+        nexti ( j=dj.nexti)
+    loop ;
+
+\ find idx of entry with value 0
+: ll-find0 ( -- i )
+    0 ( i = 0 )
+    begin 
+        1+ dup 
+    val 0= until 
+    ;
+
+: surround ( i -- i.preva i.nexta)
+    dup preva swap nexta ;
+
 \ swap positions i j in linked list
-\ this is accomplished by swapping the prev and next values between positions i and j
+\ di = data[i]; dj = data[j] 
+\ di.prev.next = j
+\ dj.next.prev = i
+\ di.next = dj.next
+\ dj.next = i
+\ dj.prev = di.prev
+\ di.prev = j
+
 : ll-swap ( i j -- )
-    2dup
-    preva swap preva swap memswap \ memswap(preva(i), preva(j)) 
-    nexta swap nexta swap memswap \ memswap(nexta(i), nexta(j)) 
-    ;    
+    2dup swap ( i j j i)
+    previ nexta ( i j j di.prev.next )
+    ! \ (i j) di.prev.next = j  
+    2dup ( i j i j)
+    nexti preva ( i j i j.next.prev)
+    ! \ (i j) dj.next.prev = i
+    2dup ( i j i j)
+    nexti ( i j i dj.nexti)
+    swap nexta ( i j dj.nexti di.next)
+    ! \ (i j) \ di.next = dj.nexti
+    2dup ( i j i j)
+    nexta ( i j i dj.next)
+    ! ( i j ) \ dj.next = i
+    2dup swap ( i j j i )
+    previ swap preva ( i j di.previ dj.prev)
+    ! ( i j ) \ dj.prev = di.previ
+    2dup swap ( i j j i )
+    preva ( i j j di.prev )
+    ! ( i j ) \ di.prev = j
+    drop drop ;
+
+\ swap positions using only the forward links (don't update backlinks)
+\ data[data[i].prev].next = j
+\ data[i]
 
 \ move entry at position i one to the right
 : ll-move-one-right ( i -- )
@@ -72,15 +127,23 @@ size 3 * cells allot
     ;
 : ll-move-one-left ( i -- )
     dup previ ( i j=previ )
-    .s
-    ll-swap
+    swap ll-swap
     ;
+
+\ : ll-move-n-right (i n -- )
     
+
 ll-init
-ll-show
+ll-walkvaluesf .s clearstack
+ll-walkvaluesb .s clearstack
+cr ." val 3 to the right=" 0 3 ll-findi-nright . cr
+
+cr ." 0 is at mem idx="  ll-find0 . cr
+
 3 ll-move-one-right
-." swapped once" cr
-ll-show
-3 ll-move-one-left
-." swapped back" cr
-ll-show
+3 ll-move-one-right
+." swapped twice"
+ll-walkvaluesf .s clearstack
+ll-walkvaluesb .s clearstack
+cr ." idx if we move 3 to the right=" 0 3 ll-findi-nright . cr
+cr ." 0 is at mem idx="  ll-find0 . cr
