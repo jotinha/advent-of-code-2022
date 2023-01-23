@@ -44,5 +44,10 @@ size 3 * cells allot
         i 1 + size mod i nexta ! \ put i+1 % size at index i
     loop ;
 
-ll-init
+: ll-show ( -- )
+    size 0 do
+        i nexti i val i previ
+        . ." <- " . ." -> " . cr
+    loop ;
+
 
