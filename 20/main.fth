@@ -1,20 +1,53 @@
-include read.fth
-
-s" test" read-numbers-file
-constant size
-
 \ implements a linked list. Each entry is a tuple of
 \ * value
 \ * addr of next entry
 
 variable llf
-size 2 * cells allot 
+10002 cells allot  \ allocate space for 5k+1 entries (each entry takes two cells)
 
 : llf-addr ( i -- addr ) 2 * cells llf + ; \ address of entry with index i
 : llf-value ( addr -- x ) @ ;
 : llf-next ( addr -- addr ) 1 cells + ;  \ address of the pointer to next location (to get the actual location do llf-next @)
 : llf-next-get ( addr -- target ) llf-next @ ;
 : llf-next-set ( target addr -- ) llf-next ! ;
+
+s" test" r/o open-file throw
+constant fid 
+
+: read-line-as-number ( fid -- n f )
+   pad 20 rot ( c-str u fid )
+   read-line throw ( nchars not-eof-flag )
+   if 
+      pad swap ( c-addr nchars )
+      s>number? ( d1 d2 f )
+      0= throw ( d1 d2 ) \ throw if flag=0
+      drop ( d1 ) \ not interested in d2
+      -1 ( d flag=-1 )
+   else
+      drop 0 0 ( d=0 flag=0 ) \ indicate eof
+   then ;
+
+: llf-load ( -- n )
+   5001 0 do \ max of 5k lines
+      fid read-line-as-number ( d not-eof-flag )
+      0= ( d ) 
+      if drop i leave then \ if eof return i
+      i llf-addr ! ( ) \ *addr{i}=d
+      i 1+ llf-addr i llf-addr llf-next-set ( ) \ *addr{i}.next = addr{i+1}
+   loop ( n ) 
+   \ the last one must point to the first entry
+   llf over 1- llf-addr llf-next-set ( n ) \ addr{n-1}.next = llf
+
+   \ add the null entry at the end
+   -1 over llf-addr ! ( n ) \ *addr{n}=-1 
+   -1 over llf-addr llf-next-set ( n ) \ addr{n}.next=-1
+   ;
+
+
+llf-load
+constant size
+cr ." Read " size . ." lines" cr
+
 : llf-null ( -- addr ) size llf-addr ;
 : llf-next-set-null ( addr -- ) 
    llf-null ( addr nulladdr )
@@ -31,9 +64,13 @@ size 2 * cells allot
    loop  
    drop cr ;
 
+llf-ls
+
 : nreverse ( x1...xn n -- xn..x1 ) \ reverse the stack
    0 DO I ROLL LOOP ;
 
+\ initialize llf from the stack
+\ sometimes fails for large stacks, so this is now used just for testing
 : llf-init ( x1..xn -- )
    size nreverse ( xn..x1 )
    llf  ( xn..x1 addr )
@@ -53,8 +90,6 @@ size 2 * cells allot
    -1 size llf-addr !
    -1 size llf-addr llf-next-set
    ;
-
-llf-init
 
 \ get the address of the item that is n places to the right of entry at addr
 \ doesn't work with negative indices
