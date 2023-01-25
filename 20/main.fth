@@ -74,28 +74,6 @@ variable llf-null
 : nreverse ( x1...xn n -- xn..x1 ) \ reverse the stack
    0 DO I ROLL LOOP ;
 
-\ initialize llf from the stack
-\ sometimes fails for large stacks, so this is now used just for testing
-: llf-init ( x1..xn -- )
-   size nreverse ( xn..x1 )
-   llf  ( xn..x1 addr )
-   size 0 do
-      tuck ( xn..x2 addr x1 addr )
-      ! ( xn..x2 addr ) \ *addr = x1
-      1 cells + ( xn..x1 addr+1c )
-      dup 1 cells + ( xn..x1 addr+1c addr+2c )
-      dup rot ( xn..x1 addr+2c addr+2c addr+1c )
-      ! ( xn..x1 addr+2c ) \ *(addr+1c) = addr+2c
-   loop ( addr+2c ) 
-   \ the last one must point to the first entry
-   1 cells - ( addr+2c-1c )
-   llf swap ( llf addr+1c )
-   !
-   \ add a dummy entry at the end
-   -1 size llf-addr !
-   -1 size llf-addr llf-next-set
-   ;
-
 \ get the address of the item that is n places to the right of entry at addr
 \ doesn't work with negative indices
 : llf-nright ( addr n -- addr )

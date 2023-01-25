@@ -26,9 +26,40 @@ include main.fth
 : check-llf-nexti-equals ( i1..in -  )
    size 0 do
       size i - 1- llf-addr llf-next-get ( i1..in addr{size-i-1}.next )
-      swap llf-addr ( i1..in-1 addr.next addr[in] )
+      swap ( i1..in-1 addr.next in )
+      \ if in=-1 then treat it differently, get the null address instead
+      dup -1 = if drop llf-null else llf-addr then ( i1..in-1 addr.next target=in==-1? llf-null : llf-addr{in} )
       \ 2dup . . cr
       = check
+   loop ;
+
+\ initialize llf from the stack
+\ sometimes fails for large stacks, so this is now used just for testing
+: llf-init ( x1..xn -- )
+   7 pSize ! \ TODO: unhack
+   size nreverse ( xn..x1 )
+   llf  ( xn..x1 addr )
+   size 0 do
+      tuck ( xn..x2 addr x1 addr )
+      ! ( xn..x2 addr ) \ *addr = x1
+      1 cells + ( xn..x1 addr+1c )
+      dup 1 cells + ( xn..x1 addr+1c addr+2c )
+      dup rot ( xn..x1 addr+2c addr+2c addr+1c )
+      ! ( xn..x1 addr+2c ) \ *(addr+1c) = addr+2c
+   loop ( addr+2c ) 
+   \ the last one must point to the first entry
+   1 cells - ( addr+2c-1c )
+   llf swap ( llf addr+1c )
+   !
+   \ add a dummy entry at the end
+   -1 size llf-addr !
+   -1 size llf-addr llf-next-set
+   ;   
+
+: llf-show-raw
+   size 0 do
+      i llf-addr llf-value .
+      i llf-addr llf-next-get .
    loop ;
 
 1 1 + 2 = check 
@@ -66,33 +97,33 @@ include main.fth
 1 llf-addr llf-remove
 10 20 30 40 50 60 70 check-llf-vals-equals \ the raw values don't change
 10 30 40 50 60 70 llf 6 check-llf-vals-chain-equals \ but the sequence does
-2 7 3 4 5 6 0 check-llf-nexti-equals
+2 -1 3 4 5 6 0 check-llf-nexti-equals
 
 \ test llf-remove entry at idx 6 with value 70)
 10 20 30 40 50 60 70 llf-init
 6 llf-addr llf-remove
 10 20 30 40 50 60 70 check-llf-vals-equals \ the raw values don't change
 10 20 30 40 50 60 llf 6 check-llf-vals-chain-equals \ but the sequence does
-1 2 3 4 5 0 7 check-llf-nexti-equals
+1 2 3 4 5 0 -1 check-llf-nexti-equals
 
 \ remove another on the same array (idx=5 val=60)
 5 llf-addr llf-remove
 10 20 30 40 50 60 70 check-llf-vals-equals \ the raw values don't change
 10 20 30 40 50 llf 5 check-llf-vals-chain-equals \ but the sequence does
-1 2 3 4 0 7 7 check-llf-nexti-equals
+1 2 3 4 0 -1 -1 check-llf-nexti-equals
 
 \ remove another on the same array (idx=2 val=30)
 2 llf-addr llf-remove
 10 20 30 40 50 60 70 check-llf-vals-equals \ the raw values don't change
 10 20 40 50 llf 4 check-llf-vals-chain-equals \ but the sequence does
-1 3 7 4 0 7 7 check-llf-nexti-equals
+1 3 -1 4 0 -1 -1 check-llf-nexti-equals
 
 \ test remove index 0 (because we start the lookup on the first index)
 10 20 30 40 50 60 70 llf-init
 0 llf-addr llf-remove
 10 20 30 40 50 60 70 check-llf-vals-equals \ the raw values don't change
 20 30 40 50 60 70  1 llf-addr  6 check-llf-vals-chain-equals \ but the sequence does
-7 2 3 4 5 6 1 check-llf-nexti-equals
+-1 2 3 4 5 6 1 check-llf-nexti-equals
 
 \ now, if we remove another one, will find-prev still work?
 3 llf-addr llf-findprev-b @ 30 is=
@@ -100,7 +131,7 @@ include main.fth
 3 llf-addr llf-remove
 10 20 30 40 50 60 70 check-llf-vals-equals \ the raw values don't change
 20 30 50 60 70  1 llf-addr  5 check-llf-vals-chain-equals \ but the sequence does
-7 2 4 7 5 6 1 check-llf-nexti-equals
+-1 2 4 -1 5 6 1 check-llf-nexti-equals
 
 \ test insert
 10 20 30 40 50 60 70 llf-init
