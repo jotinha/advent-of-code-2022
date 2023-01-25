@@ -195,16 +195,36 @@ llf-reset-links
       llf-move-n ( )
    loop ;     
 
-: ans1 
-   mix
-   llf-find0 ( acc addr{val=0} ) \ start at address of entry with val 0
+: get-grooves ( -- x )
+   llf-find0 ( addr{val=0} ) \ start at address of entry with val 0
    3 0 do
       1000 llf-nright ( addr=addr+1000 ) \ walk 1000 places
       dup @ ( addr val )
       swap ( val addr )
    loop ( val1 val2 val3 addr )
-   drop + + 
+   drop + + ( val1 + val2 + val3 )
    ;
 
-ans1 . cr
+: ans1 
+   mix
+   get-grooves
+   ;
+
+: llf-values-multiply ( x -- )
+   size 0 do
+      dup i llf-addr llf-value *  ( x x*addr{i}.val )
+      i llf-addr ! ( x ) \ addr.val = addr.val*x
+   loop drop ;
+
+: ans2 
+   \ first we need to multiply all values by 811589153
+   \ for 64-bit forth, the precision should be enough, otherwise use mod
+   llf-reset-links \ reset mix
+   811589153 llf-values-multiply
+   10 0 do mix loop \ mix 10 times
+   get-grooves
+   ;
+
+
+ans1 . ans2 .
 
