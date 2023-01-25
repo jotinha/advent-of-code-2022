@@ -46,6 +46,6 @@ func main() {
         panic(err)
     } 
 
-    fmt.Println(findStartPackage(dat, 4),",", findStartPackage(dat, 14))
+    fmt.Printf("%d,%d\n", findStartPackage(dat, 4), findStartPackage(dat, 14))
 }
 
