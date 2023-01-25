@@ -45,8 +45,11 @@ include main.fth
 
 : llf-show-raw
    size 0 do
+      i llf-addr . ." : "
       i llf-addr llf-value .
       i llf-addr llf-next-get .
+      i llf-addr llf-prev-get .
+      cr
    loop ;
 
 
@@ -74,19 +77,6 @@ llf-init-test
 1 llf-addr 14 llf-nright llf-value 20 is=
 1 llf-addr 15 llf-nright llf-value 30 is=
 1 llf-addr 0 llf-nright llf-value 20 is=  \ n=0
-
-\ test llf-findprev
-llf-init-test
-1 llf-addr llf-findprev @ 10 is=
-
-\ test llf-findprev
-llf-init-test
-0 llf-addr llf-findprev @ 70 is=
-
-\ test llf-findprev
-llf-init-test
-6 llf-addr llf-findprev @ 60 is=
-
 
 \ test llf-remove  entry at idx 1 with value 20
 llf-init-test
@@ -120,9 +110,6 @@ llf-init-test
 10 20 30 40 50 60 70 check-llf-vals-equals \ the raw values don't change
 20 30 40 50 60 70  1 llf-addr  6 check-llf-vals-chain-equals \ but the sequence does
 -1 2 3 4 5 6 1 check-llf-nexti-equals
-
-\ now, if we remove another one, will find-prev still work?
-3 llf-addr llf-findprev @ 30 is=
 
 3 llf-addr llf-remove
 10 20 30 40 50 60 70 check-llf-vals-equals \ the raw values don't change

@@ -1,6 +1,7 @@
-\ implements a linked list. Each entry is a tuple of
+\ implements a doubly linked list. Each entry is a tuple of
 \ * value
 \ * addr of next entry
+\ * addr of prev entry
 
 variable pSize
 : size pSize @ ;
@@ -8,13 +9,18 @@ variable pSize
 : size0 0 pSize ! ;
 
 variable llf
-10002 cells allot  \ allocate space for a max of 5k+1 entries (each entry takes two cells)
+15000 cells allot  \ allocate space for a max of 5k (each entry takes three cells)
 
-: llf-addr ( i -- addr ) 2 * cells llf + ; \ address of entry with index i
+: llf-addr ( i -- addr ) 3 * cells llf + ; \ address of entry with index i
 : llf-value ( addr -- x ) @ ;
 : llf-next ( addr -- addr ) 1 cells + ;  \ address of the pointer to next location (to get the actual location do llf-next @)
+: llf-prev ( addr -- addr ) 2 cells + ;  \ address of the pointer to prev location (to get the actual location do llf-prev @)
 : llf-next-get ( addr -- target ) llf-next @ ;
+: llf-prev-get ( addr -- target ) llf-prev @ ;
 : llf-next-set ( target addr -- ) llf-next ! ;
+: llf-prev-set ( target addr -- ) llf-prev ! ;
+: llf-first ( -- addr ) llf ;
+: llf-last ( -- addr ) size 1- llf-addr ;
 
 : read-line-as-number ( fid -- n f )
    pad 20 rot ( c-str u fid )
@@ -33,9 +39,12 @@ variable llf
 : llf-reset-links ( -- )
    size 0 do
       i 1+ llf-addr i llf-addr llf-next-set ( ) \ addr{i}.next = addr{i+1}
+      i 1- llf-addr i llf-addr llf-prev-set ( ) \ addr{i}.prev = addr{i-1}
    loop
    \ the last one must point to the first entry
-   llf size 1- llf-addr llf-next-set ( ) \ addr{size-1}.next = llf
+   llf-first llf-last llf-next-set ( ) \ addr{size-1}.next = llf
+   \ the first one must link to the last entry
+   llf-last llf-first llf-prev-set ( ) \ last.prev = first
    ;   
 
 : llf-load ( c-addr -- ) \ also updates size
@@ -72,36 +81,35 @@ variable llf
    0= until 
    ;
 
-\ find the address of the previous entry 
-\ instead of following the chain of links, follows the linear indices
-: llf-findprev ( cur -- addr )
-   size 0 do 
-      i llf-addr ( cur addr{i} )
-      llf-next-get over = ( cur addr{i}.next=cur )
-      if 
-         drop i llf-addr ( addr{i} )
-         leave
-       then ( cur )
-   loop
+\ remove item, i.e 
+\ x.prev.next = x.next
+\ x.next.prev = x.prev
+\ x.next = x.prev = -1
+: llf-remove { addr -- }
+   addr llf-next-get ( addr.next )
+   addr llf-prev-get ( addr.next addr.prev )
+   llf-next-set ( ) \ addr.prev.next = addr.next
+   addr llf-prev-get ( addr.prev )
+   addr llf-next-get ( addr.prev addr.next )
+   llf-prev-set ( ) \ addr.next.prev = addr.prev
+
+   -1 addr llf-next-set \ addr.next = -1
+   -1 addr llf-prev-set \ addr.prev = -1
    ;
 
-\ remove item, i.e prev.next = addr.next
-: llf-remove ( addr )
-   dup dup llf-findprev ( addr addr prev )
-   swap llf-next-get swap ( addr addr.next prev )
-   llf-next-set ( addr ) \ prev.next = addr.next
-   -1 swap llf-next-set ( ) \ addr.next = -1
+
+\ insert item `addr` after item `prev` and before `next`
+: llf-insert-between { addr prev next -- }
+   addr prev llf-next-set \ prev.next = addr
+   addr next llf-prev-set \ next.prev = addr
+   prev addr llf-prev-set \ addr.prev = prev
+   next addr llf-next-set \ addr.next = next
    ;
 
 \ insert item `addr` after item `prev`
-\ addr.next = prev.next
-\ prev.next = addr
 : llf-insert ( addr prev -- )
-   2dup ( addr prev addr prev )
-   llf-next-get ( addr prev addr prev.next ) 
-   swap llf-next-set ( addr prev ) \ addr.next = prev.next
-   llf-next-set ( ) \ prev.next = addr
-   ;
+   dup llf-next-get ( addr prev prev.next )
+   llf-insert-between ;
 
 : llf-move-n ( addr n -- )
    size 1- mod ( addr n=n%{size-1} )
