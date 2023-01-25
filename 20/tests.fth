@@ -76,7 +76,7 @@ llf-init-test
 1 llf-addr 7 llf-nright llf-value 20 is=
 1 llf-addr 14 llf-nright llf-value 20 is=
 1 llf-addr 15 llf-nright llf-value 30 is=
-1 llf-addr 0 llf-nright llf-value 20 is=  \ n=0
+\ 1 llf-addr 0 llf-nright llf-value 20 is=  \ n=0 no longer supported
 
 \ test llf-remove  entry at idx 1 with value 20
 llf-init-test

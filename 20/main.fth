@@ -63,13 +63,10 @@ variable llf
 \ get the address of the item that is n places to the right of entry at addr
 \ doesn't work with negative indices
 : llf-nright ( addr n -- addr )
-   dup 0<= if ( addr n ) \ if (n <= 0)
-      drop
-   else
-      0 do ( addr ) \ for i=0:size
-         llf-next-get ( addr=addr.next )
-      loop
-   then ;
+   dup 0<= if abort then ( addr n ) \ if (n <= 0) abort
+   0 do ( addr ) \ for i=0:size
+      llf-next-get ( addr=addr.next )
+   loop ;
 
 \ find addr of entry with value 0
 \ FIXME: this will fail if the first entry has been deleted
@@ -113,7 +110,7 @@ variable llf
 
 : llf-move-n ( addr n -- )
    size 1- mod ( addr n=n%{size-1} )
-   dup 0> if 
+   dup 0<> if 
       over swap ( addr addr n )
       llf-nright ( addr prev=llf-nright{addr,n} )
       swap dup ( prev addr addr )
@@ -146,18 +143,20 @@ variable llf
    get-grooves
    ;
 
-: llf-values-multiply ( x -- )
-   size 0 do
-      dup i llf-addr llf-value *  ( x x*addr{i}.val )
-      i llf-addr ! ( x ) \ addr.val = addr.val*x
-   loop drop ;
-
 : ans2 
    \ first we need to multiply all values by 811589153
    \ for 64-bit forth, the precision should be enough, otherwise use mod
    llf-reset-links \ reset mix
-   811589153 llf-values-multiply
-   10 0 do mix loop \ mix 10 times
+   
+   size 0 do
+      i llf-addr llf-value 811589153 * ( addr{i}.val * key )
+      i llf-addr ! 
+   loop
+   
+   10 0 do  \ mix 10 times
+      mix 
+   loop
+   
    get-grooves
    ;
 
