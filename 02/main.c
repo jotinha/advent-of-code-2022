@@ -1,41 +1,37 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int decode(char code) {
+int decode(char c) {
     // if A or X ->1, B or Y -> 2, C or Z -> 3
-    return (code - 'A') % 23 + 1;
+    return (c - 'A') % 23 + 1;
 }
-int pick2(int code1, char strategy) {
-    if (strategy == 'Y') { // draw
-        return code1;
-    } else if (strategy == 'Z') { // win
-        //1->2 2->3 3->1       
-        return code1 % 3 + 1; 
-    } else { // lose
-        //1->3 2->1 3->2
-        return (code1+1) % 3 + 1;
-    }
+
+int pick2(int code1, int strategy) {
+    return 
+        strategy == 2 ? code1 : // Y draw
+        strategy == 3 ? code1 % 3 + 1 : // Z win (1->2 2->3 3->1)
+        strategy == 1 ? (code1+1) % 3 + 1 : // X lose (1->3 2->1 3->2)
+        -1;
 }
 
 int play(int a, int b) {
     // 0 if losing, 1 if draw, 2 if win
-
     int diff = (b-a);
-    if (diff == 2) { // sciscors loses to rock
-        return 0;
-    } else if (diff == -2) { // rocks beats scisors
-        return 2;
-    } else {
-        return diff+1;
-    }
+    return
+        diff == 2 ? 0 : // scisors loses to rock
+        diff == -2 ? 2 : // rocks beats scisors 
+        diff+1;
+}
+
+int score(int code1, int code2) {
+    return code2 + play(code1,code2) * 3;
 }
 
 int main(void) {
     //printf("Hello world\n");
 
-    char line[8];
-    char code1, code2, strategy ;
-    int total = 0;
+    char c1, c2;
+    int ans1 = 0, ans2= 0;
  
     FILE *fp;
     if ((fp = fopen("input","rt")) == NULL) {
@@ -43,16 +39,14 @@ int main(void) {
     }
 
     //while(fgets(line,8,fp) != NULL) {
-    while(fscanf(fp, "%c %c\n", &code1, &strategy) == 2) {
-        code1 = decode(code1);
-        code2 = pick2(code1, strategy);
-        int outcome = play(code1, code2);
-        int points = code2 + outcome * 3;
-        //printf("%d %d %d %d\n", code1, code2, outcome, points);
-        total += points;
+    while(fscanf(fp, "%c %c\n", &c1, &c2) == 2) {
+        int code1 = decode(c1);
+        int code2 = decode(c2);
+        ans1 += score(code1, code2);
+        ans2 += score(code1, pick2(code1, code2));
     }
-    //printf("Total points: %d\n", total);
-    printf("FIXME,FIXME\n");
-    
+    printf("%d,%d\n", ans1, ans2);
+
+    fclose(fp); 
 }
 
