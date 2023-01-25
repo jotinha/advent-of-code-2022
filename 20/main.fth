@@ -20,9 +20,6 @@ variable llf-null
 : llf-next-get ( addr -- target ) llf-next @ ;
 : llf-next-set ( target addr -- ) llf-next ! ;
 
-s" input" r/o open-file throw
-constant fid 
-
 : read-line-as-number ( fid -- n f )
    pad 20 rot ( c-str u fid )
    read-line throw ( nchars not-eof-flag )
@@ -45,18 +42,18 @@ constant fid
    llf size 1- llf-addr llf-next-set ( ) \ addr{size-1}.next = llf
    ;   
 
-: llf-load ( -- ) \ also updates size
+: llf-load ( c-addr -- ) \ also updates size
+   r/o open-file throw ( fid )
    size0 \ reset size
    begin
-      fid read-line-as-number ( d not-eof-flag )
-   while ( d )
+      dup read-line-as-number ( fid d not-eof-flag )
+   while ( fid d )
       size llf-addr ! \ addr{size}.value=d
-      size++
-   repeat
+      size++ 
+   repeat 
+   drop close-file throw
    llf-reset-links
    ;
-
-llf-load
 
 : llf-next-set-null ( addr -- ) 
    llf-null ( addr nulladdr )
@@ -220,6 +217,6 @@ llf-load
    get-grooves
    ;
 
-
+s" input" llf-load
 ans1 . ans2 .
 
