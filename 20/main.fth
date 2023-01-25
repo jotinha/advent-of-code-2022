@@ -2,8 +2,13 @@
 \ * value
 \ * addr of next entry
 
+variable pSize
+: size pSize @ ;
+: size++ 1 pSize +! ;
+: size0 0 pSize ! ;
+
 variable llf
-10002 cells allot  \ allocate space for 5k+1 entries (each entry takes two cells)
+10002 cells allot  \ allocate space for a max of 5k+1 entries (each entry takes two cells)
 
 : llf-addr ( i -- addr ) 2 * cells llf + ; \ address of entry with index i
 : llf-value ( addr -- x ) @ ;
@@ -27,20 +32,18 @@ constant fid
       drop 0 0 ( d=0 flag=0 ) \ indicate eof
    then ;
 
-: llf-load ( -- n )
-   5001 0 do \ max of 5k lines
+: llf-load ( -- ) \ also updates size
+   size0 \ reset size
+   begin
       fid read-line-as-number ( d not-eof-flag )
-      0= ( d ) 
-      if drop i leave then \ if eof return i
-      i llf-addr ! ( ) \ addr{i}.value=d
-   loop 
-   \ add the null entry at the end
-   -1 over llf-addr ! ( n ) \ *addr{n}=-1 
+   while ( d )
+      size llf-addr ! \ addr{size}.value=d
+      size++
+   repeat
    ;
 
 
 llf-load
-constant size
 cr ." Read " size . ." lines" cr
 
 : llf-show-raw
