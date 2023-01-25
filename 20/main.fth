@@ -11,7 +11,7 @@ variable llf
 : llf-next-get ( addr -- target ) llf-next @ ;
 : llf-next-set ( target addr -- ) llf-next ! ;
 
-s" test" r/o open-file throw
+s" input" r/o open-file throw
 constant fid 
 
 : read-line-as-number ( fid -- n f )
@@ -32,21 +32,34 @@ constant fid
       fid read-line-as-number ( d not-eof-flag )
       0= ( d ) 
       if drop i leave then \ if eof return i
-      i llf-addr ! ( ) \ *addr{i}=d
-      i 1+ llf-addr i llf-addr llf-next-set ( ) \ *addr{i}.next = addr{i+1}
-   loop ( n ) 
-   \ the last one must point to the first entry
-   llf over 1- llf-addr llf-next-set ( n ) \ addr{n-1}.next = llf
-
+      i llf-addr ! ( ) \ addr{i}.value=d
+   loop 
    \ add the null entry at the end
    -1 over llf-addr ! ( n ) \ *addr{n}=-1 
-   -1 over llf-addr llf-next-set ( n ) \ addr{n}.next=-1
    ;
 
 
 llf-load
 constant size
 cr ." Read " size . ." lines" cr
+
+: llf-show-raw
+   size 1+ 0 do
+      i llf-addr llf-value .
+      i llf-addr llf-next-get .
+   loop ;
+
+\ sets the forwards links, can also be used to unmix back to the original order
+: llf-reset-links ( -- )
+   size 0 do
+      i 1+ llf-addr i llf-addr llf-next-set ( ) \ addr{i}.next = addr{i+1}
+   loop
+   \ the last one must point to the first entry
+   llf size 1- llf-addr llf-next-set ( ) \ addr{size-1}.next = llf
+   \ the null entry points nowhere
+   -1 size llf-addr llf-next-set ( ) \ addr{size}.next = -1
+   ;
+llf-reset-links
 
 : llf-null ( -- addr ) size llf-addr ;
 : llf-next-set-null ( addr -- ) 
@@ -64,7 +77,7 @@ cr ." Read " size . ." lines" cr
    loop  
    drop cr ;
 
-llf-ls
+\ llf-ls
 
 : nreverse ( x1...xn n -- xn..x1 ) \ reverse the stack
    0 DO I ROLL LOOP ;
