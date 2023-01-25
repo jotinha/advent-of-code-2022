@@ -2,7 +2,7 @@ import java.io.*;
 import java.lang.Math;
 import java.util.Arrays;
 
-class Puzzle1 {
+class Main {
     public static void main(String[] args) throws IOException {
 
         FileReader fr = new FileReader("input");
