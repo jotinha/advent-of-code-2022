@@ -32,26 +32,6 @@ constant fid
       drop 0 0 ( d=0 flag=0 ) \ indicate eof
    then ;
 
-: llf-load ( -- ) \ also updates size
-   size0 \ reset size
-   begin
-      fid read-line-as-number ( d not-eof-flag )
-   while ( d )
-      size llf-addr ! \ addr{size}.value=d
-      size++
-   repeat
-   ;
-
-
-llf-load
-cr ." Read " size . ." lines" cr
-
-: llf-show-raw
-   size 1+ 0 do
-      i llf-addr llf-value .
-      i llf-addr llf-next-get .
-   loop ;
-
 \ sets the forwards links, can also be used to unmix back to the original order
 : llf-reset-links ( -- )
    size 0 do
@@ -61,8 +41,20 @@ cr ." Read " size . ." lines" cr
    llf size 1- llf-addr llf-next-set ( ) \ addr{size-1}.next = llf
    \ the null entry points nowhere
    -1 size llf-addr llf-next-set ( ) \ addr{size}.next = -1
+   ;   
+
+: llf-load ( -- ) \ also updates size
+   size0 \ reset size
+   begin
+      fid read-line-as-number ( d not-eof-flag )
+   while ( d )
+      size llf-addr ! \ addr{size}.value=d
+      size++
+   repeat
+   llf-reset-links
    ;
-llf-reset-links
+
+llf-load
 
 : llf-null ( -- addr ) size llf-addr ;
 : llf-next-set-null ( addr -- ) 
