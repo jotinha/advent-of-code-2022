@@ -10,10 +10,6 @@ variable pSize
 variable llf
 10002 cells allot  \ allocate space for a max of 5k+1 entries (each entry takes two cells)
 
-variable llf-null
-2 cells allot
--1 -1 llf-null 2!
-
 : llf-addr ( i -- addr ) 2 * cells llf + ; \ address of entry with index i
 : llf-value ( addr -- x ) @ ;
 : llf-next ( addr -- addr ) 1 cells + ;  \ address of the pointer to next location (to get the actual location do llf-next @)
@@ -53,12 +49,6 @@ variable llf-null
    repeat 
    drop close-file throw
    llf-reset-links
-   ;
-
-: llf-next-set-null ( addr -- ) 
-   llf-null ( addr nulladdr )
-   swap ( nulladdr addr )
-   llf-next-set ( ) \ addr.next = nulladdr
    ;
 
 : llf-ls ( -- )
@@ -130,8 +120,8 @@ variable llf-null
 : llf-remove ( addr )
    dup dup llf-findprev-b ( addr addr prev )
    swap llf-next-get swap ( addr addr.next prev )
-   llf-next-set ( addr ) \ prev.next = addr
-   llf-next-set-null ( ) 
+   llf-next-set ( addr ) \ prev.next = addr.next
+   -1 swap llf-next-set ( ) \ addr.next = -1
    ;
 
 \ insert item `addr` after item `prev`

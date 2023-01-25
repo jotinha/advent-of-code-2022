@@ -27,10 +27,13 @@ include main.fth
    size 0 do
       size i - 1- llf-addr llf-next-get ( i1..in addr{size-i-1}.next )
       swap ( i1..in-1 addr.next in )
-      \ if in=-1 then treat it differently, get the null address instead
-      dup -1 = if drop llf-null else llf-addr then ( i1..in-1 addr.next target=in==-1? llf-null : llf-addr{in} )
+      \ if in=-1 then treat it differently
+      dup -1 = if  ( i1..in-1 addr.next in )
+         is=
+      else
+         llf-addr is=
+      then ( i1..in-1 target=in==-1? check{addr.next==-1} : check{addr.next==llf-addr{in}} )
       \ 2dup . . cr
-      = check
    loop ;
 
 \ initialize llf from the stack
