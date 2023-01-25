@@ -12,11 +12,11 @@ variable dll
 15000 cells allot  \ allocate space for a max of 5k (each entry takes three cells)
 
 : dll-at ( i -- addr ) 3 * cells dll + ; \ address of entry with index i
-: get-value ( addr -- x ) @ ;
-: get-next ( addr -- target ) cell+ @ ;
-: get-prev ( addr -- target ) cell+ cell+ @ ;
-: set-next ( target addr -- ) cell+ ! ;
-: set-prev ( target addr -- ) cell+ cell+ ! ;
+: getval ( addr -- x ) @ ;
+: getnext ( addr -- target ) cell+ @ ;
+: getprev ( addr -- target ) cell+ cell+ @ ;
+: setnext ( target addr -- ) cell+ ! ;
+: setprev ( target addr -- ) cell+ cell+ ! ;
 : dll-first ( -- addr ) dll ;
 : dll-last ( -- addr ) size 1- dll-at ;
 
@@ -36,13 +36,13 @@ variable dll
 \ sets the forwards links, can also be used to unmix back to the original order
 : dll-reset-links ( -- )
    size 0 do
-      i 1+ dll-at i dll-at set-next ( ) \ addr{i}.next = addr{i+1}
-      i 1- dll-at i dll-at set-prev ( ) \ addr{i}.prev = addr{i-1}
+      i 1+ dll-at i dll-at setnext ( ) \ addr{i}.next = addr{i+1}
+      i 1- dll-at i dll-at setprev ( ) \ addr{i}.prev = addr{i-1}
    loop
    \ the last one must point to the first entry
-   dll-first dll-last set-next ( ) \ addr{size-1}.next = dll
+   dll-first dll-last setnext ( ) \ addr{size-1}.next = dll
    \ the first one must link to the last entry
-   dll-last dll-first set-prev ( ) \ last.prev = first
+   dll-last dll-first setprev ( ) \ last.prev = first
    ;   
 
 : dll-load ( c-addr -- ) \ also updates size
@@ -63,7 +63,7 @@ variable dll
 : dll-nright ( addr n -- addr )
    dup 0<= if abort then ( addr n ) \ if (n <= 0) abort
    0 do ( addr ) \ for i=0:size
-      get-next ( addr=addr.next )
+      getnext ( addr=addr.next )
    loop ;
 
 \ find addr of entry with value 0
@@ -71,7 +71,7 @@ variable dll
 : dll-find0 ( -- addr )
    dll-first ( addr )
    begin 
-      get-next ( addr = addr.next )
+      getnext ( addr = addr.next )
       dup @ ( addr.next addr.next.value )
    0= until 
    ;
@@ -81,29 +81,29 @@ variable dll
 \ x.next.prev = x.prev
 \ x.next = x.prev = -1
 : dll-remove { addr -- }
-   addr get-next ( addr.next )
-   addr get-prev ( addr.next addr.prev )
-   set-next ( ) \ addr.prev.next = addr.next
-   addr get-prev ( addr.prev )
-   addr get-next ( addr.prev addr.next )
-   set-prev ( ) \ addr.next.prev = addr.prev
+   addr getnext ( addr.next )
+   addr getprev ( addr.next addr.prev )
+   setnext ( ) \ addr.prev.next = addr.next
+   addr getprev ( addr.prev )
+   addr getnext ( addr.prev addr.next )
+   setprev ( ) \ addr.next.prev = addr.prev
 
-   -1 addr set-next \ addr.next = -1
-   -1 addr set-prev \ addr.prev = -1
+   -1 addr setnext \ addr.next = -1
+   -1 addr setprev \ addr.prev = -1
    ;
 
 
 \ insert item `addr` after item `prev` and before `next`
 : dll-insert-between { addr prev next -- }
-   addr prev set-next \ prev.next = addr
-   addr next set-prev \ next.prev = addr
-   prev addr set-prev \ addr.prev = prev
-   next addr set-next \ addr.next = next
+   addr prev setnext \ prev.next = addr
+   addr next setprev \ next.prev = addr
+   prev addr setprev \ addr.prev = prev
+   next addr setnext \ addr.next = next
    ;
 
 \ insert item `addr` after item `prev`
 : dll-insert ( addr prev -- )
-   dup get-next ( addr prev prev.next )
+   dup getnext ( addr prev prev.next )
    dll-insert-between ;
 
 : dll-move-n ( addr n -- )
@@ -121,7 +121,7 @@ variable dll
 
 : mix ( -- )
    size 0 do
-      i dll-at get-value ( val )
+      i dll-at getval ( val )
       i dll-at swap ( addr n )
       dll-move-n ( )
    loop ;     
@@ -147,7 +147,7 @@ variable dll
    dll-reset-links \ reset mix
    
    size 0 do
-      i dll-at get-value 811589153 * ( addr{i}.val * key )
+      i dll-at getval 811589153 * ( addr{i}.val * key )
       i dll-at ! 
    loop
    

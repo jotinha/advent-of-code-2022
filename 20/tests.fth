@@ -10,7 +10,7 @@ include main.fth
 
 : check-dll-vals-equals ( x1..xn -  )
    size 0 do
-      size i - 1- dll-at get-value ( x1..xn addr{size-i-1}.val )
+      size i - 1- dll-at getval ( x1..xn addr{size-i-1}.val )
       = ( x1..xn-1 xn==val ) 
       check
    loop ;
@@ -21,14 +21,14 @@ include main.fth
    2r> ( xn..x1 addr n )
    0 do ( xn..x1 addr )
       \ cr 2dup . . cr
-      dup get-value ( xn..x1 addr addr.val ) 
+      dup getval ( xn..x1 addr addr.val ) 
       rot is= ( xn..x2 addr check{addr.val == x1} )
-      get-next ( xn..x2 addr=addr.next )
+      getnext ( xn..x2 addr=addr.next )
    loop ;
 
 : check-dll-nexti-equals ( i1..in -  )
    size 0 do
-      size i - 1- dll-at get-next ( i1..in addr{size-i-1}.next )
+      size i - 1- dll-at getnext ( i1..in addr{size-i-1}.next )
       swap ( i1..in-1 addr.next in )
       \ if in=-1 then treat it differently
       dup -1 = if  ( i1..in-1 addr.next in )
@@ -46,9 +46,9 @@ include main.fth
 : dll-show-raw
    size 0 do
       i dll-at . ." : "
-      i dll-at get-value .
-      i dll-at get-next .
-      i dll-at get-prev .
+      i dll-at getval .
+      i dll-at getnext .
+      i dll-at getprev .
       cr
    loop ;
 
@@ -57,7 +57,7 @@ include main.fth
    cr
    dll size 0 do ( addr )
       dup ? ." -> " ( addr ) \ print value at addr
-      get-next ( addr=addr.next )
+      getnext ( addr=addr.next )
    loop  
    drop cr ;
 
@@ -68,15 +68,15 @@ dll-init-test
 1 2 3 4 5 6 0 check-dll-nexti-equals
 
 \ test dll-nright (input is entry at idx 1 with value 20)
-1 dll-at get-value 20 is=
-1 dll-at 1 dll-nright get-value 30 is=
-1 dll-at 2 dll-nright get-value 40 is=
-1 dll-at 5 dll-nright get-value 70 is=
-1 dll-at 6 dll-nright get-value 10 is=
-1 dll-at 7 dll-nright get-value 20 is=
-1 dll-at 14 dll-nright get-value 20 is=
-1 dll-at 15 dll-nright get-value 30 is=
-\ 1 dll-at 0 dll-nright get-value 20 is=  \ n=0 no longer supported
+1 dll-at getval 20 is=
+1 dll-at 1 dll-nright getval 30 is=
+1 dll-at 2 dll-nright getval 40 is=
+1 dll-at 5 dll-nright getval 70 is=
+1 dll-at 6 dll-nright getval 10 is=
+1 dll-at 7 dll-nright getval 20 is=
+1 dll-at 14 dll-nright getval 20 is=
+1 dll-at 15 dll-nright getval 30 is=
+\ 1 dll-at 0 dll-nright getval 20 is=  \ n=0 no longer supported
 
 \ test dll-remove  entry at idx 1 with value 20
 dll-init-test
@@ -184,7 +184,7 @@ dll-init-test
 \ use test data, compare against result in python
 s" test" dll-load
 mix
-4 dll-at get-value -2 is=
+4 dll-at getval -2 is=
 -2 1 2 -3 4 0 3
 4 dll-at 7 check-dll-vals-chain-equals 
 
