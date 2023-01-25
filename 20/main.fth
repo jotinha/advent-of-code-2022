@@ -63,6 +63,7 @@ variable llf
    then ;
 
 \ find addr of entry with value 0
+\ FIXME: this will fail if the first entry has been deleted
 : llf-find0 ( -- addr )
    llf ( addr )
    begin 
@@ -71,20 +72,9 @@ variable llf
    0= until 
    ;
 
-\ find the address of the previous entry ( requires a linear search )
-: llf-findprev ( cur -- addr )
-   llf ( cur addr ) \ this fails if entry 0 has been removed
-   size 0 do 
-      2dup llf-next-get = ( cur addr cur==addr.next )
-      if leave then 
-      llf-next-get
-   loop
-   nip ( addr )
-   ;
-
 \ find the address of the previous entry 
 \ instead of following the chain of links, follows the linear indices
-: llf-findprev-b ( cur -- addr )
+: llf-findprev ( cur -- addr )
    size 0 do 
       i llf-addr ( cur addr{i} )
       llf-next-get over = ( cur addr{i}.next=cur )
@@ -97,7 +87,7 @@ variable llf
 
 \ remove item, i.e prev.next = addr.next
 : llf-remove ( addr )
-   dup dup llf-findprev-b ( addr addr prev )
+   dup dup llf-findprev ( addr addr prev )
    swap llf-next-get swap ( addr addr.next prev )
    llf-next-set ( addr ) \ prev.next = addr.next
    -1 swap llf-next-set ( ) \ addr.next = -1

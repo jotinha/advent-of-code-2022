@@ -96,15 +96,15 @@ include main.fth
 
 \ test llf-findprev
 10 20 30 40 50 60 70 llf-init
-1 llf-addr llf-findprev-b @ 10 is=
+1 llf-addr llf-findprev @ 10 is=
 
 \ test llf-findprev
 10 20 30 40 50 60 70 llf-init
-0 llf-addr llf-findprev-b @ 70 is=
+0 llf-addr llf-findprev @ 70 is=
 
 \ test llf-findprev
 10 20 30 40 50 60 70 llf-init
-6 llf-addr llf-findprev-b @ 60 is=
+6 llf-addr llf-findprev @ 60 is=
 
 
 \ test llf-remove  entry at idx 1 with value 20
@@ -141,7 +141,7 @@ include main.fth
 -1 2 3 4 5 6 1 check-llf-nexti-equals
 
 \ now, if we remove another one, will find-prev still work?
-3 llf-addr llf-findprev-b @ 30 is=
+3 llf-addr llf-findprev @ 30 is=
 
 3 llf-addr llf-remove
 10 20 30 40 50 60 70 check-llf-vals-equals \ the raw values don't change
