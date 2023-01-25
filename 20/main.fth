@@ -51,19 +51,6 @@ variable llf
    llf-reset-links
    ;
 
-: llf-ls ( -- )
-   cr
-   llf size 0 do ( addr )
-      dup ? ." -> " ( addr ) \ print value at addr
-      llf-next-get ( addr=addr.next )
-   loop  
-   drop cr ;
-
-\ llf-ls
-
-: nreverse ( x1...xn n -- xn..x1 ) \ reverse the stack
-   0 DO I ROLL LOOP ;
-
 \ get the address of the item that is n places to the right of entry at addr
 \ doesn't work with negative indices
 : llf-nright ( addr n -- addr )
@@ -83,11 +70,6 @@ variable llf
       dup @ ( addr.next addr.next.value )
    0= until 
    ;
-
-\ cr ." 0 is at pos " llf-find0 . cr
-
-\ cr ." the item that is 5 places to the right of the start is "
-\ llf 5 llf-nright ? cr
 
 \ find the address of the previous entry ( requires a linear search )
 : llf-findprev ( cur -- addr )
@@ -112,9 +94,6 @@ variable llf
        then ( cur )
    loop
    ;
-
-\ cr ." the item to the left of the start is "
-\ llf llf-findprev ? cr
 
 \ remove item, i.e prev.next = addr.next
 : llf-remove ( addr )
@@ -147,7 +126,6 @@ variable llf
    then
    ;
 
-\ ." mixing "
 : mix ( -- )
    size 0 do
       i llf-addr llf-value ( val )
@@ -186,5 +164,5 @@ variable llf
    ;
 
 s" input" llf-load
-ans1 . ans2 .
+ans1 . .\" \b," ans2 . cr
 

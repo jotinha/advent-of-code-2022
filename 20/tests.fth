@@ -1,5 +1,8 @@
 include main.fth
 
+: nreverse ( x1...xn n -- xn..x1 ) \ reverse the stack
+   0 DO I ROLL LOOP ;
+
 : check ( f -- )
    0= if abort then ;
 
@@ -64,6 +67,15 @@ include main.fth
       i llf-addr llf-value .
       i llf-addr llf-next-get .
    loop ;
+
+
+: llf-ls ( -- )
+   cr
+   llf size 0 do ( addr )
+      dup ? ." -> " ( addr ) \ print value at addr
+      llf-next-get ( addr=addr.next )
+   loop  
+   drop cr ;
 
 1 1 + 2 = check 
 
@@ -207,7 +219,5 @@ mix
 4 llf-addr llf-value -2 is=
 -2 1 2 -3 4 0 3
 4 llf-addr 7 check-llf-vals-chain-equals 
-
-
 
 ." tests passed" cr
