@@ -1,6 +1,6 @@
 import scala.io.Source
 
-object Puzzle8 {
+object Main {
 
     //scan is like reduce but returns the values as it progresses through the list  
     //because we set an initial value, the list will have n+1 entries 
