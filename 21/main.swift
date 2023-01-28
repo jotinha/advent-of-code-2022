@@ -1,6 +1,6 @@
 import Foundation
 
-var d : [String: Cmd]  = [:]
+var MONKEYS: [String: Cmd]  = [:]
 
 enum Cmd {
     case n(Double)
@@ -23,14 +23,14 @@ func parse(file: String)  {
                     .components(separatedBy: .newlines) 
     for line in lines {
         if !line.isEmpty {
-            let word_cmd = line.components(separatedBy: ":")
-            d[word_cmd[0]] = parse(command: word_cmd[1])
+            let ws = line.components(separatedBy: ":")
+            MONKEYS[ws[0]] = parse(command: ws[1])
         }
     }
 }
 
-func execute(_ word: String) -> Double {
-    switch d[word] {
+func execute(_ name: String) -> Double {
+    switch MONKEYS[name] {
         case let .n(n) : return n
         case let .op("+", w1, w2): return execute(w1) + execute(w2)
         case let .op("-", w1, w2): return execute(w1) - execute(w2)
@@ -41,17 +41,17 @@ func execute(_ word: String) -> Double {
 }
 
 parse(file: "input")
+
 let ans1 = Int(execute("root"))
-assert(ans1==194501589693264)
 
 // For part II, we need to replace the root operation with a diff
 // and use a root finding algorithm 
 
-if case let .op(_,w1,w2) = d["root"] {
-    d["root"] = .op("-",w1,w2)
+if case let .op(_,w1,w2) = MONKEYS["root"] {
+    MONKEYS["root"] = .op("-",w1,w2)
 }
 func shout(n: Double) -> Double {
-    d["humn"] = .n(n)
+    MONKEYS["humn"] = .n(n)
     return execute("root")
 }
 
