@@ -42,8 +42,32 @@ func execute(_ word: String) -> Double {
 
 parse(file: "input")
 let ans1 = Int(execute("root"))
-let ans2 = 0
-
 assert(ans1==194501589693264)
+
+// For part II, we need to replace the root operation with a diff
+// and use a root finding algorithm 
+
+if case let .op(_,w1,w2) = d["root"] {
+    d["root"] = .op("-",w1,w2)
+}
+func shout(n: Double) -> Double {
+    d["humn"] = .n(n)
+    return execute("root")
+}
+
+func root(f: (Double)->(Double), x0: Double, x1: Double, y0: Double? = nil, y1: Double? = nil) -> Double {
+    // https://en.wikipedia.org/wiki/Secant_method
+    let y0 = y0 ?? f(x0)
+    let y1 = y1 ?? f(x1)
+    let x = x1 - y1*(x1-x0)/(y1-y0)
+    let y = f(x)
+    if y == 0 {
+        return x 
+    } else {
+        return root(f:f, x0:x1, x1:x, y0: y1, y1:y)
+    } 
+}
+
+let ans2 = Int(root(f:shout, x0:0, x1:100000))
 
 print("\(ans1),\(ans2)")
