@@ -3,12 +3,12 @@ from dataclasses import dataclass, replace as copy
 import re
 from math import floor
 
-data = open("test").readlines()
+data = open("input").readlines()
 board = data[:-2]
 pwd = data[-1]
 
 ww = max(len(b) for b in board)
-board = [[1 if c == '.' else 2 if c == '#' else 0 for c in b.ljust(ww)] for b in board]
+board = [[1 if c == '.' else 2 if c == '#' else 0 for c in b.ljust(ww) if c!='\n'] for b in board]
 board = array(board)
 
 moves = re.findall('([0-9]+|R|L)',pwd)
@@ -22,7 +22,8 @@ x = vec3(1,0,0)
 y = vec3(0,1,0)
 z = vec3(0,0,1)
 
-w = 4 # 50
+# w = 4  #  for test set
+w = 50  # for input set
 
 @dataclass
 class Face:
@@ -47,12 +48,12 @@ def face_at(state):
 def get_tex_coord(state):
    f,i = face_at(state)
    u,v = dot(f.u, state.pos) + w/2, dot(f.v, state.pos) + w/2
+   if abs(u) >= w or abs(v) >= w:
+      raise ValueError(f"invalid coords: u={u},v={v}")
    col = floor(f.col0 + u)
    row = floor(f.row0 + v)
-   if 0 <= col < ww and 0 <= row < ww:
-      return row,col
-   else:
-      raise ValueError("invalid coords")
+   return row, col
+      
 
 def is_wall(row, col):
    return board[row,col] == 2
@@ -66,9 +67,8 @@ def move1(state):
 
    state.pos = state.pos + state.fwd
    
-   # we use the abs because we need to tread point -25 (included) and 25 (excluded) differently
-   proj = dot(state.pos, abs(state.fwd))
-   if proj < -w/2 or proj >= w/2:
+   proj = dot(state.pos, state.fwd)
+   if proj > w/2:
       # state.pos = state.pos - state.fwd # walk back
       # change to another face
       state.up, state.fwd = state.fwd, -state.up
@@ -108,29 +108,45 @@ def score(state):
 
 
 #input
-# faces = [
-#   Face(x, -y, z, 0, 100),
-#   Face(y,x,z, 0, 50),
-#   Face(z,x,-y, 50, 50),
-#   Face(-y,x,-z, 100, 50),
-#   Face(-x,-y,-z, 100,0),
-#   Face(-z,-y,x, 150, 0)
-#]
+faces = [
+  Face(x, -y, z, 0, 100),
+  Face(y,x,z, 0, 50),
+  Face(z,x,-y, 50, 50),
+  Face(-y,x,-z, 100, 50),
+  Face(-x,-y,-z, 100,0),
+  Face(-z,-y,x, 150, 0)
+]
 
 # test
-faces = [
-   Face(y, x, z, 0, 2*w),
-   Face(-z, -x, -y, w, 0),
-   Face(-x,z,-y,w,w),
-   Face(z,x,-y, w, 2*w),
-   Face(-y,x,-z,2*w,2*w),
-   Face(x,y,-z,2*w, 3*w)
-]
+# faces = [
+#    Face(y, x, z, 0, 2*w),
+#    Face(-z, -x, -y, w, 0),
+#    Face(-x,z,-y,w,w),
+#    Face(z,x,-y, w, 2*w),
+#    Face(-y,x,-z,2*w,2*w),
+#    Face(x,y,-z,2*w, 3*w)
+# ]
 
 state = state0 = State(pos=vec3(-w/2,w/2,-w/2), fwd=vec3(1,0,0), up=vec3(0,1,0))
 state0.pos = state0.pos + 0.5
-#
 trace = []
 walk(state0, moves, trace)
 print(score(trace[-1]))
+
+def draw_trace(trace):
+   import matplotlib.pyplot as plt
+   bm = board.copy()
+   for s in trace:
+       row,col = get_tex_coord(s)
+       bm[row,col] = 3
+   plt.imshow(bm)
+
+def draw_trace3d(trace):
+   import matplotlib.pyplot as plt
+   ax = plt.figure().add_subplot(projection='3d')
+   ax.set_xlim(-w/2,w/2);
+   ax.set_ylim(-w/2,w/2);
+   ax.set_zlim(-w/2,w/2);
+   data = np.vstack([s.pos for s in trace])
+   ax.plot(data[:,0], data[:,1], data[:,2], 'k.-')
 
