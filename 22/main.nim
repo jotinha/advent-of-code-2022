@@ -24,7 +24,29 @@ let
    texture = lines[0..^4] # range is inclusive, the last line is empty line
    moves = findAll(lines[^2], re"([0-9]+|R|L)")
 
-echo texture[10][15]
+proc cross(a: Vec3, b: Vec3): Vec3 =
+   return a # TODO
 
+proc dot(a: Vec3, b: Vec3): Vec3 = 
+   return a # TODO 
 
+proc rotate(state: State, dir: string) : State = 
+   return state # TODO 
 
+proc move(state: State): State =
+   return state # TODO
+
+proc is_wall(state: State): bool = 
+   return False # TODO
+
+proc walk(state0: State, moves: seq[string]) : State = 
+   var state: State = state0
+   for m in moves:
+      if m in "LR":
+         state = rotate(state, m)
+      else:
+         for i in 1..parseInt(m):
+            state = move(state)
+   return state
+
+var state0 = State()
