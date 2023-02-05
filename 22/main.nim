@@ -2,8 +2,6 @@ import std/strutils
 import std/re
 import std/math
 import std/strformat
-import std/sequtils
-
 
 const
    fname = "input"
@@ -54,6 +52,7 @@ func `==`(a,b: Vec3): bool = a[0]==b[0] and a[1]==b[1] and a[2]==b[2]
 func dot(a,b: Vec3): float = a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
 func cross(a: Vec3, b: Vec3): Vec3 = [a[1]*b[2] - a[2]*b[1], a[2]*b[0] - a[0]*b[2], a[0]*b[1] - a[1]*b[0]]
 
+# hardcoding the world format because it's hard to generalize
 when fname == "test":
    const 
       w = 4
@@ -103,63 +102,44 @@ func tex_coords(world: CubeWorld, state: State): (int,int) =
       v = dot(f.v, state.pos) + f.height/2
    return (f.row0 + floor(v).int,f.col0 + floor(u).int)
 
-proc rowSize(i:int): int = 
-   texture[i].strip().len
+proc getPixel(world: World, state: State): char =
+   let (i,j) = world.tex_coords(state)
+   if i in 0..<texture.len and j in 0..<texture[i].len:
+      return texture[i][j]
+   else:
+      return ' '
+
+proc rowSize(i:int): int = texture[i].strip().len
 proc colSize(j:int): int = 
    for line in texture:
       if j<line.len and line[j] != ' ':
          result += 1
 
-when fname == "test":
-   doAssert rowSize(0) == 4
-   doAssert rowSize(1) == 4
-   doAssert rowSize(4) == 12
-   doAssert rowSize(8) == 8
-   doAssert colSize(0) == 4
-   doAssert colSize(1) == 4
-   doAssert colSize(3) == 4
-   doAssert colSize(8) == 12
-   doAssert colSize(12) == 4
-
-proc is_wall(world: World, state: State): bool = 
-   let (i,j) = world.tex_coords(state)
-   if i >= 0 and j >= 0 and i < texture.len:
-      let row = texture[i]
-      return row[j] == '#'
-   else:
-      return false
-
-proc is_void(world: FlatWorld, state: State): bool = 
-   let (i,j) = world.tex_coords(state)
-   if i >= 0 and j >= 0 and i < texture.len:
-      let row = texture[i]
-      return j >= row.len or row[j] == ' '
-   else:
-      return true
-
+proc is_wall(world: World, state: State): bool = getPixel(world, state) == '#'
+proc is_void(world: FlatWorld, state: State): bool = getPixel(world, state) == ' '
+   
 proc move(world: FlatWorld, state: var State) =
    let old = state
 
    # move on step in the currently facing direction, unless a wall is there
    state.pos = state.pos + state.fwd
-   echo state
+   # echo state
 
    if world.is_void(state):
       
       # wrap around
-      # state.pos = state.pos - state.fwd
       let f = world.face_at(state)
       let (i,j) = world.tex_coords(state)
       if dot(state.fwd, f.u) != 0:
          state.pos = state.pos - state.fwd * float(rowSize(i))
       else:
          state.pos = state.pos - state.fwd * float(colSize(j))
-      echo "wraped around to ", state
-   
+      #echo "wraped around to ", state
+    
    doAssert state.pos[0] >= 0 and state.pos[1] >= 0 and state.pos[2] >= 0
    
    if world.is_wall(state):
-      echo "is wall, stop"
+      #echo "is wall, stop"
       state = old 
 
 proc move(world: CubeWorld, state: var State) =
@@ -201,15 +181,16 @@ func score(world: World, state: State): int =
 
    result = (i+1)*1000 + (j+1)*4 + facing
 
+proc solve1(): int =
+   var state1 = State(pos: [2.0*w, 0.0, 0.0], fwd: x, up: y)
+   walk(world1, state1, moves)
+   score(world1, state1)   
 
-var state1 = State(pos: [2.0*w, 0.0, 0.0], fwd: x, up: y)
-walk(world1, state1, moves)
-let ans1 = score(world1, state1)
+proc solve2(): int = 
+   var state2 = State(pos: [-w/2,w/2,-w/2], fwd: x, up: y)
+   state2.pos = state2.pos + 0.5
+   walk(world2, state2, moves)
+   score(world2, state2)
 
-var state2 = State(pos: [-w/2,w/2,-w/2], fwd: x, up: y)
-state2.pos = state2.pos + 0.5
-walk(world2, state2, moves)
-let ans2 = score(world2, state2)
-
-echo fmt"{ans1},{ans2}"
+echo fmt"{solve1()},{solve2()}"
 
