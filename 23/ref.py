@@ -1,12 +1,13 @@
 from collections import defaultdict
-from itertools import product
+from itertools import islice
+from tqdm import trange
 
 elves = set()
 for i,line in enumerate(open("input")):
    for j, c in enumerate(line):
       if c == '#':
          elves.add((i,j))
-print(elves)         
+#print(elves)         
 
 def neighbors(pos): 
    i,j = pos
@@ -61,17 +62,26 @@ def score(state):
    ry,rx = map_range(state)
    return len(ry)*len(rx) - len(state)
 
-state = elves
-draw(state)
-n = len(state)
-order = [0, 1, 2, 3]
-for round in range(1,11):
-   print(f"End of round {round}")
-   state = next(state, order)
-   assert len(state) == n
-   draw(state)
-   order.append(order.pop(0))
+def solve1():
+   order = [0, 1, 2, 3]
+   state = elves
+   for _ in range(10):
+      state = next(state, order)
+      order.append(order.pop(0))
+   return score(state)
 
-ans1 = score(state)
-ans2 = 0
+def solve2():
+   order = [0, 1, 2, 3]
+   state = elves
+   for i in trange(1000):
+      new_state = next(state, order)
+      if new_state == state:
+         return i +1
+      else:
+         state = new_state
+      order.append(order.pop(0))
+   return "can't find answer before max iterations"
+
+ans1 = solve1()
+ans2 = solve2()
 print(f"{ans1},{ans2}")   
