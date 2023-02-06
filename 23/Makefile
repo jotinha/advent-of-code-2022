@@ -1,4 +1,5 @@
-all: 
-	@echo TODO,TODO
+run: main.apl
+	dyalogscript $<
 
-
+install:
+	brew install dyalog
