@@ -31,11 +31,18 @@ step ← {
    next_state
 }
 
-solve1 ← {
+ans1 ← {
    s ← (step⍣10) ⍵ ⍝ run step 10 times starting at state ⍵
-   ⍝ s ← step ⍵
-   ⎕ ← s - N÷2
+   ⍝ ⎕ ← s - N÷2
    (-≢s) + ×/↑1+⌈/s - ⌊/s ⍝ multiply difference between min and max cols and rows (+1) and subtract length of state
-}
+} state
 
-⎕ ← solve1 state
+ans2 ← {
+   ⍺ ← 0 ⋄ ⎕ ← ⍺
+   s ← step ⍵
+   s ≡ ⍵ : ⍺ ⍝ if state didn't change, return accumulator
+   ⍺ = 1000 : ⍺ ⍝ if it reaches max iterations, also stop
+   (⍺+1)∇s ⍝ otherwise recurse
+} state
+
+⎕ ← ~∘' '⍕ans1 ',' ans2
