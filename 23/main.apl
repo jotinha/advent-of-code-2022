@@ -12,6 +12,7 @@ nidxs ← { ⍵ ∘.+ns } ⍝ indices of neighbors
 neighbors ← { (board ⍵)[nidxs ⍵] } ⍝ for each neighbor in order, 1 if they are filled, 0 otherwise
 
 step ← {
+   ⍺ ← order
    x ← neighbors ⍵
    allz←{0=+/⍵≠0} ⍝ for each row, return 1 if all elements are zero
    xa ← allz x
@@ -19,29 +20,33 @@ step ← {
    xe ← allz x[;2 4 7]
    xs ← allz x[;5 6 7]
    xw ← allz x[;0 3 5]
-   xc ← ⍉↑xa xn xs xw xe
+   
+   xc ← ⍉↑(xa xn xs xw xe)[0,(⍺+1)]
    pick_cols ← {⍵⍳1}¨↓xc
-   candidates ← ⍵, (nidxs ⍵)[;1 6 3 4], ⍵
+   candidates ← ⍵, (nidxs ⍵)[;(1 6 3 4)[⍺]], ⍵
    next_state ← candidates[↓⍉↑(⍳≢⍵) pick_cols]
 
    pos_counts ← {⍺(≢⍵)}⌸next_state
    repeated_pos ← (pos_counts[;1]>1)/↑pos_counts[;0]
    pos_is_repeated ← next_state ∊ repeated_pos ⍝ FIXME  this also rollsback positions that are repeated but one of them didn't move, can it happen?
    (pos_is_repeated/next_state) ← pos_is_repeated/⍵
+   order ⊢← 1⌽order ⍝ update global variable
    next_state
 }
 
+order ← 0 1 2 3
 ans1 ← {
    s ← (step⍣10) ⍵ ⍝ run step 10 times starting at state ⍵
    ⍝ ⎕ ← s - N÷2
    (-≢s) + ×/↑1+⌈/s - ⌊/s ⍝ multiply difference between min and max cols and rows (+1) and subtract length of state
 } state
 
-ans2 ← {
-   ⍺ ← 0 ⋄ ⎕ ← ⍺
+order ← 0 1 2 3
+ans2 ← 0 {
+   ⍺ ← 0 ⍝ ⋄ ⎕ ← ⍺
    s ← step ⍵
-   s ≡ ⍵ : ⍺ ⍝ if state didn't change, return accumulator
-   ⍺ = 1000 : ⍺ ⍝ if it reaches max iterations, also stop
+   s ≡ ⍵ : ⍺+1⍝ if state didn't change, return accumulator (iteration number)
+   ⍺ = 1000 : ⍺+1 ⍝ if it reaches max iterations, also stop
    (⍺+1)∇s ⍝ otherwise recurse
 } state
 
