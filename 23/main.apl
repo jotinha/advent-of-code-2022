@@ -11,21 +11,29 @@ ns ← (⊂0 0)~⍨(,¯1 + ⍳3 3) ⍝ relative indices of the 8 neighbors in al
 nidxs ← { ⍵ ∘.+ns } ⍝ indices of neighbors
 neighbors ← { (board ⍵)[nidxs ⍵] } ⍝ for each neighbor in order, 1 if they are filled, 0 otherwise
 
-x ← neighbors state
-allz←{0=+/⍵≠0} ⍝ for each row, return 1 if all elements are zero
-xa ← allz x
-xn ← allz x[;0 1 2]
-xe ← allz x[;2 4 7]
-xs ← allz x[;5 6 7]
-xw ← allz x[;0 3 5]
-xc ← ⍉↑xa xn xs xw xe
-pick_cols ← {⍵⍳1}¨↓xc
-candidates ← state, (nidxs state)[;1 6 3 4], state
-next_state ← candidates[↓⍉↑(⍳22) pick_cols]
+step ← {
+   x ← neighbors ⍵
+   allz←{0=+/⍵≠0} ⍝ for each row, return 1 if all elements are zero
+   xa ← allz x
+   xn ← allz x[;0 1 2]
+   xe ← allz x[;2 4 7]
+   xs ← allz x[;5 6 7]
+   xw ← allz x[;0 3 5]
+   xc ← ⍉↑xa xn xs xw xe
+   pick_cols ← {⍵⍳1}¨↓xc
+   candidates ← ⍵, (nidxs ⍵)[;1 6 3 4], ⍵
+   next_state ← candidates[↓⍉↑(⍳22) pick_cols]
 
-pos_counts ← {⍺(≢⍵)}⌸next_state
-repeated_pos ← (pos_counts[;1]>1)/↑pos_counts[;0]
-pos_is_repeated ← next_state ∊ repeated_pos ⍝ FIXME  this also rollsback positions that are repeated but one of them didn't move, can it happen?
-(pos_is_repeated/next_state) ← pos_is_repeated/state
+   pos_counts ← {⍺(≢⍵)}⌸next_state
+   repeated_pos ← (pos_counts[;1]>1)/↑pos_counts[;0]
+   pos_is_repeated ← next_state ∊ repeated_pos ⍝ FIXME  this also rollsback positions that are repeated but one of them didn't move, can it happen?
+   (pos_is_repeated/next_state) ← pos_is_repeated/⍵
+   next_state
+}
 
-⎕ ← board next_state
+solve1 ← {
+   s ← (step⍣10) ⍵ ⍝ run step 10 times starting at state ⍵
+   (-≢s) + ×/↑1+⌈/s - ⌊/s ⍝ multiply difference between min and max cols and rows (+1) and subtract length of state
+}
+
+⎕ ← solve1 state
