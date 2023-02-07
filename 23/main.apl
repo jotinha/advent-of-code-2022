@@ -1,7 +1,7 @@
 ⎕IO ← 0
 
-N ← 30 ⍝ board will be this size in each direction, should be enough for input data
-data ← ↑⊃⎕NGET'test'1
+N ← 2048 ⍝ board will be this size in each direction, should be enough for input data
+data ← ↑⊃⎕NGET'input'1
 
 state ← (N÷2) + ⍸data='#' ⍝ 2d indices of elves positions, starting at N÷2
 
@@ -22,7 +22,7 @@ step ← {
    xc ← ⍉↑xa xn xs xw xe
    pick_cols ← {⍵⍳1}¨↓xc
    candidates ← ⍵, (nidxs ⍵)[;1 6 3 4], ⍵
-   next_state ← candidates[↓⍉↑(⍳22) pick_cols]
+   next_state ← candidates[↓⍉↑(⍳≢⍵) pick_cols]
 
    pos_counts ← {⍺(≢⍵)}⌸next_state
    repeated_pos ← (pos_counts[;1]>1)/↑pos_counts[;0]
@@ -33,6 +33,8 @@ step ← {
 
 solve1 ← {
    s ← (step⍣10) ⍵ ⍝ run step 10 times starting at state ⍵
+   ⍝ s ← step ⍵
+   ⎕ ← s - N÷2
    (-≢s) + ×/↑1+⌈/s - ⌊/s ⍝ multiply difference between min and max cols and rows (+1) and subtract length of state
 }
 
