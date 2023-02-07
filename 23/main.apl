@@ -23,5 +23,9 @@ pick_cols ← {⍵⍳1}¨↓xc
 candidates ← state, (nidxs state)[;1 6 3 4], state
 next_state ← candidates[↓⍉↑(⍳22) pick_cols]
 
-⎕ ← next_state
-⎕ ← next_state
+pos_counts ← {⍺(≢⍵)}⌸next_state
+repeated_pos ← (pos_counts[;1]>1)/↑pos_counts[;0]
+pos_is_repeated ← next_state ∊ repeated_pos ⍝ FIXME  this also rollsback positions that are repeated but one of them didn't move, can it happen?
+(pos_is_repeated/next_state) ← pos_is_repeated/state
+
+⎕ ← board next_state
