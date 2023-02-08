@@ -41,11 +41,18 @@ score ← {
    (-≢idxs) + ×/↑1+⌈/idxs - ⌊/idxs ⍝ multiply difference between min and max cols and rows (+1) and subtract length of state
 }
 
-ans1 ← 0 {
+ans1 ← {
    ⍺ ← 0
    s ← ⍺ step ⍵
-   ⍺ = 9 : score s ⍝ if it reaches max iterations, return score of state
+   ⍺ = 9 : score s ⍝ if it reaches max iterations, return score 
    (⍺+1)∇s ⍝ otherwise recurse
 } S
 
-⎕ ← ans1 
+ans2 ← {
+   ⍺ ← 0
+   s ← ⍺ step ⍵
+   s ≡ ⍵ : ⍺+1 ⍝ if state didn't change, return iteration number
+   (⍺+1)∇s ⍝ otherwise recurse
+} S
+
+⎕ ← ~∘' '⍕ans1 ',' ans2
