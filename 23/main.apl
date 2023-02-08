@@ -1,3 +1,6 @@
+⍝ A solution partially inspired by the conway's game of life solution
+⍝ https://www.youtube.com/watch?v=a9xAKttWgP4
+
 ⎕IO ← 0
 
 N ← 256 ⍝ board will be this size in each direction, should be enough for input data (the smaller, the faster it is, but if too small gives the wrong answer)
@@ -7,8 +10,7 @@ draw ← { ⍺ ←'.#' ⋄ ⎕ ← ⍺[⍵] ⋄ ⎕ ← ''}
 S ← (-N÷2) ⊖ (-N÷2) ⌽ N N ↑ S  ⍝ expand and center
 
 step ← {
-   ⍺ ← 0
-   order ← 0 1 ,(2 + ⍺⌽0 1 2 3)
+   order ← 0 1 ,(2 + ⍺⌽0 1 2 3)  ⍝ rotate the order of operations a nubmer of times given by the left-operand (iteration number)
    S ← ⍵
 
    Sn ← 1 0 ¯1 ∘.⊖ 1 0 ¯1⌽¨⊂S ⍝ a 9x9 grid of S shifted in all directions
@@ -42,18 +44,14 @@ score ← {
    (-≢idxs) + ×/↑1+⌈/idxs - ⌊/idxs ⍝ multiply difference between min and max cols and rows (+1) and subtract length of state
 }
 
-ans1 ← {
-   ⍺ ← 0
+ans1 ← 0 {
    s ← ⍺ step ⍵
-   ⍺ = 9 : score s   ⍝ if it reaches max iterations, return score 
-   (⍺+1)∇s           ⍝ otherwise recurse
+   ⍺ = 9 : score s ⋄ (⍺+1)∇s ⍝ if it reaches max iterations, return score, otherwise recurse
 } S
 
-ans2 ← {
-   ⍺ ← 0
+ans2 ← 0 {
    s ← ⍺ step ⍵
-   s ≡ ⍵ : ⍺+1       ⍝ if state didn't change, return iteration number
-   (⍺+1)∇s           ⍝ otherwise recurse
+   s ≡ ⍵ : ⍺+1 ⋄ (⍺+1)∇s     ⍝ if state didn't change, return iteration number, otherwise recurse
 } S
 
 ⎕ ← ~∘' '⍕ans1 ',' ans2
