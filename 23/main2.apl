@@ -18,8 +18,16 @@ o ← S ≠ ⊃ ∨/n s e w ⍝ all directions are occupied
 
 moves ← {(~⍺)^⍵}\(o a n s w e ) ⍝ TODO: explain
 
-candidates ← ⊃ moves[0] + moves[1] + 1⊖¨moves[2] + ¯1⊖¨moves[3] + ¯1⌽¨moves[4] + ¯1⌽¨moves[5]
+stay ← moves[0] ∨ moves[1]
+
+y ← (1⊖¨moves[2]) + (¯1⊖¨moves[3])
+y ← (y=1) ∨ (1⊖¨y>1) ∨ ¯1⊖¨y>1
+
+x ← (1⌽¨moves[4]) + (¯1⌽¨moves[5])
+x ← (x=1) ∨ (1⌽¨x>1) ∨ ¯1⌽¨x>1
+
+S2 ← ⊃ stay ∨ y ∨ x
 
 '.#o' draw S
-'.#o' draw candidates
+'.#o' draw S2
 
