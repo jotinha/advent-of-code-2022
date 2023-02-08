@@ -1,55 +1,59 @@
 ⎕IO ← 0
 
-N ← 2048 ⍝ board will be this size in each direction, should be enough for input data
-data ← ↑⊃⎕NGET'input'1
+N ← 256 ⍝ board will be this size in each direction, should be enough for input data (the smaller, the faster it is, but if too small gives the wrong answer)
+S ← '#' = ↑⊃⎕NGET'input'1
+draw ← { ⍺ ←'.#' ⋄ ⎕ ← ⍺[⍵] ⋄ ⎕ ← ''}
 
-state ← (N÷2) + ⍸data='#' ⍝ 2d indices of elves positions, starting at N÷2
+S ← (-N÷2) ⊖ (-N÷2) ⌽ N N ↑ S  ⍝ expand and center
 
-board ← { b ← N N⍴N N/0 ⋄ b[⍵] ← 1 ⋄ b } ⍝ create NxN board and put ones at given indices 
-
-ns ← 9⍴(⍳3 3)-1 ⍝ indices of a 3x3 square around (0 0). Goes left-to-right, up-down order (the 4th entry is (0 0))
-
-zipWithIndex ← {↓⍉↑(⍳≢⍵) ⍵}
 step ← {
-   state ← ⍵
-   pos9 ← state ∘.+ns ⍝ each row has 9 entries with the positions of the neighbors in the left-to-right, up-down order (4 is the position of the elf)
-   has_elf ← pos9 ∊ state ⍝ for each entry in pos9, put 1 if there's an elf in it already (col 4 will be all 1's of course)
-   
-   a ← 1=+/has_elf ⍝ for each row, 1 if all neighbors (except the center) are zero
-   allz←{0=+/⍵≠0} ⍝ for each row, return 1 if all elements are zero
-   n ← allz has_elf[;0 1 2] ⍝ for the N direction, 1 if no elf in the NW,N,NE positions
-   e ← allz has_elf[;2 5 8]
-   s ← allz has_elf[;6 7 8]
-   w ← allz has_elf[;0 3 6]
-   
-   cond_mat ← ⍉↑(a n s w e)[0,(order+1)] ⍝ concantenate as column vectors, with the current order of the directions
-   pick_cols ← {⍵⍳1}¨↓cond_mat ⍝ for each row, find index of first column that is true, if not returns 5
+   ⍺ ← 0
+   order ← 0 1 ,(2 + ⍺⌽0 1 2 3)
+   S ← ⍵
 
-   pos6 ← pos9[;4,(1 7 3 5)[order],4]
-   next_state ← pos6[zipWithIndex pick_cols]
+   Sn ← 1 0 ¯1 ∘.⊖ 1 0 ¯1⌽¨⊂S ⍝ a 9x9 grid of S shifted in all directions
+   n ← S ^ ⊃ 0=+/¯1↑Sn        ⍝ positions where there are no neighbors to the north
+                              ⍝ 1) take last row of Sn and sum, this gives the number of neighbors in the NW N NE places for each position
+                              ⍝ 2) see where it equals 0 (no neighbors at NW N NE)
+                              ⍝ 3) intersect with previous positions of S
+   s ← S ^ ⊃ 0=+/1↑Sn         ⍝ same for south
+   w ← S ^ ⊃ 0=+/¯1↑⍉Sn       ⍝ west
+   e ← S ^ ⊃ 0=+/1↑⍉Sn        ⍝ east
+   a ← ⊃ ∧/n s e w            ⍝ all directions are free
+   o ← S ≠ ⊃ ∨/n s e w        ⍝ all directions are occupied
 
-   ⍝ need to account for situations where positions are repeated (this is slow)
-   pos_counts ← {⍺(≢⍵)}⌸next_state
-   repeated_pos ← (pos_counts[;1]>1)/↑pos_counts[;0]
-   pos_is_repeated ← next_state ∊ repeated_pos ⍝ FIXME  this also rollsback positions that are repeated but one of them didn't actually move. But this shouldn't happen
-   (pos_is_repeated/next_state) ← pos_is_repeated/state
-   order ⊢← 1⌽order ⍝ update global variable
-   next_state
+   moves ← (o a n s w e)[order]  ⍝ creates a vector of all possible moves, in the correct order
+   moves ← {(~⍺)^⍵}\moves        ⍝ applies a scan along the vector such that only the first valid move is kept at 1, the rest are zeroed
+   moves[order] ← moves          ⍝ re-orders back to original order
+   (o a n s w e) ← moves         ⍝ unpacks back to the individual directions
+   
+                                 ⍝ to avoid collisions, we need only consider situations where two positions are in the same row or col. Can't happen for positions in the diagonal
+   y ← (1⊖n) + (¯1⊖s)            ⍝ attempt to move in the y dir, both up and down as given by the n and s masks. When we sum the two resulting arrays we might have collisions
+   y ← (y=1) ∨ (1⊖y>1) ∨ ¯1⊖y>1  ⍝ Where y>1, rollback by going back in the oposite directions
+
+   x ← (1⌽w) + (¯1⌽e)            ⍝ do the same for the x direction
+   x ← (x=1) ∨ (1⌽x>1) ∨ ¯1⌽x>1
+
+   a+o+x+y                       ⍝ join all masks, shouldn't be any number > 1
+}   
+
+score ← {
+   idxs ← ⍸⍵  ⍝ get indices where argument is 1 (as vector of 2-tuples)
+   (-≢idxs) + ×/↑1+⌈/idxs - ⌊/idxs ⍝ multiply difference between min and max cols and rows (+1) and subtract length of state
 }
 
-order ← 0 1 2 3
 ans1 ← {
-   s ← (step⍣10) ⍵ ⍝ run step 10 times starting at state ⍵
-   ⍝ ⎕ ← s - N÷2
-   (-≢s) + ×/↑1+⌈/s - ⌊/s ⍝ multiply difference between min and max cols and rows (+1) and subtract length of state
-} state
+   ⍺ ← 0
+   s ← ⍺ step ⍵
+   ⍺ = 9 : score s   ⍝ if it reaches max iterations, return score 
+   (⍺+1)∇s           ⍝ otherwise recurse
+} S
 
-order ← 0 1 2 3
-ans2 ← 0 {
-   ⍺ ← 0 ⍝ ⋄ ⎕ ← ⍺
-   s ← step ⍵
-   s ≡ ⍵ : ⍺+1⍝ if state didn't change, return accumulator (iteration number)
-   ⍺ = 1000 : ⍺+1 ⍝ if it reaches max iterations, also stop
-   (⍺+1)∇s ⍝ otherwise recurse
-} state
+ans2 ← {
+   ⍺ ← 0
+   s ← ⍺ step ⍵
+   s ≡ ⍵ : ⍺+1       ⍝ if state didn't change, return iteration number
+   (⍺+1)∇s           ⍝ otherwise recurse
+} S
+
 ⎕ ← ~∘' '⍕ans1 ',' ans2
