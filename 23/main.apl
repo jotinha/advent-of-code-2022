@@ -55,3 +55,5 @@ ans2 ← 0 {
 } S
 
 ⎕ ← ~∘' '⍕ans1 ',' ans2
+
+⎕SAVE 'main.ws'
