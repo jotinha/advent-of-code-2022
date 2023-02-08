@@ -1,12 +1,14 @@
 ⎕IO ← 0
 
-N ← 32 ⍝ board will be this size in each direction, should be enough for input data
-S ← '#' = ↑⊃⎕NGET'test'1
+N ← 2048 ⍝ board will be this size in each direction, should be enough for input data
+S ← '#' = ↑⊃⎕NGET'input'1
 draw ← { ⍺ ←'.#' ⋄ ⎕ ← ⍺[⍵] ⋄ ⎕ ← ''}
 
 S ← (-N÷2) ⊖ (-N÷2) ⌽ N N ↑ S  ⍝ expand and center
 
 step ← {
+   ⍺ ← 0
+   order ← 0 1 ,(2 + ⍺⌽0 1 2 3)
    S ← ⍵
 
    Sn ← 1 0 ¯1 ∘.⊖ 1 0 ¯1⌽¨⊂S ⍝ a 9x9 grid of S shifted in all directions
@@ -20,17 +22,18 @@ step ← {
    a ← ⊃ ∧/n s e w ⍝ all directions are free
    o ← S ≠ ⊃ ∨/n s e w ⍝ all directions are occupied
 
-   moves ← {(~⍺)^⍵}\(o a n s w e ) ⍝ TODO: explain
+   moves ← {(~⍺)^⍵}\(o a n s w e )[order] ⍝ TODO: explain
+   moves[order] ← moves
+   (o a n s w e) ← moves
+   
+   y ← (1⊖n) + (¯1⊖s)
+   y ← (y=1) ∨ (1⊖y>1) ∨ ¯1⊖y>1
 
-   stay ← moves[0] ∨ moves[1]
+   x ← (1⌽w) + (¯1⌽e)
+   x ← (x=1) ∨ (1⌽x>1) ∨ ¯1⌽x>1
 
-   y ← (1⊖¨moves[2]) + (¯1⊖¨moves[3])
-   y ← (y=1) ∨ (1⊖¨y>1) ∨ ¯1⊖¨y>1
+   o+a+x+y
 
-   x ← (1⌽¨moves[4]) + (¯1⌽¨moves[5])
-   x ← (x=1) ∨ (1⌽¨x>1) ∨ ¯1⌽¨x>1
-
-   ⊃ stay + y + x
 }   
 
 score ← {
@@ -38,8 +41,11 @@ score ← {
    (-≢idxs) + ×/↑1+⌈/idxs - ⌊/idxs ⍝ multiply difference between min and max cols and rows (+1) and subtract length of state
 }
 
-ans1 ← {
-   score (step⍣10) ⍵ ⍝ run step 10 times starting at state ⍵
+ans1 ← 0 {
+   ⍺ ← 0
+   s ← ⍺ step ⍵
+   ⍺ = 9 : score s ⍝ if it reaches max iterations, return score of state
+   (⍺+1)∇s ⍝ otherwise recurse
 } S
 
 ⎕ ← ans1 
