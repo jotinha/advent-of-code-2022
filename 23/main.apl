@@ -10,25 +10,28 @@ draw ← { ⍺ ←'.#' ⋄ ⎕ ← ⍺[⍵] ⋄ ⎕ ← ''}
 S ← (-N÷2) ⊖ (-N÷2) ⌽ N N ↑ S  ⍝ expand and center
 
 step ← {
-   order ← 0 1 ,(2 + ⍺⌽0 1 2 3)  ⍝ rotate the order of operations a nubmer of times given by the left-operand (iteration number)
    S ← ⍵
 
    Sn ← 1 0 ¯1 ∘.⊖ 1 0 ¯1⌽¨⊂S ⍝ a 9x9 grid of S shifted in all directions
-   n ← S ^ ⊃ 0=+/¯1↑Sn        ⍝ positions where there are no neighbors to the north
-                              ⍝ 1) take last row of Sn and sum, this gives the number of neighbors in the NW N NE places for each position
-                              ⍝ 2) see where it equals 0 (no neighbors at NW N NE)
-                              ⍝ 3) intersect with previous positions of S
-   s ← S ^ ⊃ 0=+/1↑Sn         ⍝ same for south
-   w ← S ^ ⊃ 0=+/¯1↑⍉Sn       ⍝ west
-   e ← S ^ ⊃ 0=+/1↑⍉Sn        ⍝ east
-   a ← ⊃ ∧/n s e w            ⍝ all directions are free
-   o ← S ≠ ⊃ ∨/n s e w        ⍝ all directions are occupied
-
-   moves ← (o a n s w e)[order]  ⍝ creates a vector of all possible moves, in the correct order
-   moves ← {(~⍺)^⍵}\moves        ⍝ applies a scan along the vector such that only the first valid move is kept at 1, the rest are zeroed
-   moves[order] ← moves          ⍝ re-orders back to original order
-   (o a n s w e) ← moves         ⍝ unpacks back to the individual directions
    
+   ⍝ Sum Sn in the x-axis and check where it equals 0, this gives 3 matricies containing a mask where there are no neighbors in the y-direction
+   ⍝ Then intersect with the positions S because we don't care about having no neighbors at empty positions
+   ⍝ The first mask (sum of Sn[0;]) is the mask of the positions with no neighbors at SW S SE
+   ⍝ The third mask (sum of Sn[2;]) is the mask of the positions with no neighbors at NW N NE
+   ⍝ Then do the same in the other direction
+   (s _ n) ← (⊂S) ^ 0=+/Sn   
+   (e _ w) ← (⊂S) ^ 0=+⌿Sn
+   
+   f ← ⊃ ∧/n s w e      ⍝ all directions are (f)ree
+   o ← S ≠ ⊃ ∨/n s w e  ⍝ all directions are (o)ccupied
+   r ← f ∨ o            ⍝ (r)emain if any of the two previous conditions hold
+
+   ⍝ Create a vector of all possible moves, in the correct order (rotated ⍺ times, the iteration number)
+   ⍝ The r mask is put at the beggining because it's the most important rule
+   ⍝ Then apply a scan along the vector such that only the first valid move is kept at 1, the remaining ones to the right are zeroed
+   ⍝ Drop the first element of the vector, rotate back and reassign the masks
+   (n s w e) ← (-⍺)⌽ 1↓ {(~⍺)^⍵}\ (⊂r),⍺⌽n s w e
+
                                  ⍝ to avoid collisions, we need only consider situations where two positions are in the same row or col. Can't happen for positions in the diagonal
    y ← (1⊖n) + (¯1⊖s)            ⍝ attempt to move in the y dir, both up and down as given by the n and s masks. When we sum the two resulting arrays we might have collisions
    y ← (y=1) ∨ (1⊖y>1) ∨ ¯1⊖y>1  ⍝ Where y>1, rollback by going back in the oposite directions
@@ -36,7 +39,7 @@ step ← {
    x ← (1⌽w) + (¯1⌽e)            ⍝ do the same for the x direction
    x ← (x=1) ∨ (1⌽x>1) ∨ ¯1⌽x>1
 
-   a+o+x+y                       ⍝ join all masks, shouldn't be any number > 1
+   r+x+y                         ⍝ join all masks, shouldn't be any number > 1
 }   
 
 score ← {
