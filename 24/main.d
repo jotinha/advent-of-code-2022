@@ -18,7 +18,25 @@ void load(string fname) {
    world.h = world.data.length; 
 }
 
+bool isFree(int x, int y, int round) {
+   return 
+      '^' != world.data[(y + round) % world.h][x] &&
+      'v' != world.data[(y - round) % world.h][x] &&
+      '<' != world.data[y][(x + round) % world.w] &&
+      '>' != world.data[y][(x - round) % world.w];
+}
+
 void main() {
    load("test");
    writeln(world);
+   
+   assert(!isFree(0,0,0));
+   assert(!isFree(1,0,0));
+   assert(isFree(0,1,0));
+   assert(isFree(0,1,0));
+   assert(isFree(2,0,0));
+   assert(!isFree(2,0,1));
+   assert(!isFree(2,0,1));
+   assert(isFree(2,1,1));
+   
 }
