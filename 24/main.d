@@ -70,15 +70,25 @@ void showMap(int round) {
 
 int solve1() {
    State state; 
+   int[State] visited;
 
    auto todo = [State(0,-1,0,0,0)];
-
    ulong it = 0;
-   while (!todo.empty && it<= 100_000) {
+   while (!todo.empty && it<= 100_000_000) {
       state = todo.front;
       todo.popFront;
-    
+
+      auto vs = state;
+      vs.rx = state.round.wrap(world.w);
+      vs.ry = state.round.wrap(world.h);
+      vs.round = 0;
+      //writeln(vs, state);
+      
+      if (vs in visited && visited[vs] <= state.round) continue;
+      visited[vs] = state.round;
+      
       if (isTarget(state.x, state.y)) {
+         writeln("Found in ", it, " iterations");
          return state.round+1;
       }
    
@@ -99,7 +109,7 @@ int solve1() {
 }
 
 void main() {
-   load("test");
+   load("input");
    writeln(world);
    
    /*assert(!isFree(0,0,0));
