@@ -29,6 +29,7 @@ bool posEquals(State a, State b) {
 bool isFree(int x, int y, int round) {
    return 
       (x == 0 && y == -1) || // starting position is allowed
+      (x == world.w-1 && y == world.h) || // ending position also allowed
       x >= 0 && x < world.w &&
       y >= 0 && y < world.h &&
       '^' != world.data[wrap(y + round,world.h)][x] &&
@@ -63,7 +64,7 @@ void showMap(int round) {
    }
 }
 
-int findPath(State start, State end) {
+int shortestPath(State start, State end) {
    State state; 
    int[VisitedState] visited;
 
@@ -104,11 +105,6 @@ int findPath(State start, State end) {
 
 }
 
-int solve1() {
-   return findPath(State(0,-1,0), State(world.w-1, world.h-1)) + 1;
-
-}
-
 void main() {
    load("input");
    writeln(world);
@@ -121,18 +117,24 @@ void main() {
    assert(!isFree(2,0,1));
    assert(!isFree(2,0,1));
    assert(isFree(2,1,1));*/
-   writeln(wrap(-1,6));
    assert(wrap(-1,6) == 5);
    assert(wrap(-7,6) == 5);
    assert(wrap(2,6) == 2);
    assert(wrap(8,6) == 2);
 
-   auto ans1 = solve1();
+
+   auto a = State(0,-1,0);
+   auto b = State(world.w-1, world.h, 0);
+   
+   auto ans1 = shortestPath(a, b); 
+   b.round = ans1; // start 2nd leg of the journey at b but update starting round
+   a.round = shortestPath(b, a);
+   auto ans2 = shortestPath(a, b);   
+ 
   /* showMap(0);
    for (int i=1; i<=18; i++) {
       writeln("minute ", i);
       showMap(i);
    }*/
-   auto ans2= 0;
    writeln(ans1,',',ans2);
 }
