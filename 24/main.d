@@ -3,10 +3,17 @@ import std.container : DList;
 
 struct World {
    string[] data; 
-   ulong h, w;
+   int h, w;
 };
 
 World world;
+
+struct State {
+    int x, y;
+    int rx, ry;
+    int round;
+};
+
 
 void load(string fname) {
    world.data = File(fname).byLineCopy
@@ -14,16 +21,68 @@ void load(string fname) {
                   .map!(line => line[1..$-1])
                   .filter!(line => line[1] != '#')
                   .array;
-   world.w = world.data[0].length;
-   world.h = world.data.length; 
+   world.w = cast(int)world.data[0].length;
+   world.h = cast(int)world.data.length; 
 }
 
 bool isFree(int x, int y, int round) {
    return 
-      '^' != world.data[(y + round) % world.h][x] &&
-      'v' != world.data[(y - round) % world.h][x] &&
-      '<' != world.data[y][(x + round) % world.w] &&
-      '>' != world.data[y][(x - round) % world.w];
+      x >= 0 && x < world.w &&
+      y >= 0 && y < world.h &&
+      '^' != world.data[wrap(y + round,world.h)][x] &&
+      'v' != world.data[wrap(y - round,world.h)][x] &&
+      '<' != world.data[y][wrap(x + round,world.w)] &&
+      '>' != world.data[y][wrap(x - round,world.w)];
+}
+
+int wrap(int a, int b) {
+   //d's implementation of modulo gives -1%6 == -1, and we want it to give -1%6 == 5
+   return (b + (a % b)) % b;
+}
+
+
+
+State[] nextMoves(State state) {
+   state.round += 1;
+   //WRONG state.rx = (state.rx + 1) % world.w;
+   //WRONG state.ry = (state.ry + 1) % world.h;
+   auto moves = [state, state, state, state, state]; 
+   moves[0].x -= 1;
+   moves[1].x += 1;
+   moves[2].y -= 1;
+   moves[3].y += 1;
+   //move 4 is wait
+   return moves;
+}
+void showMap(int round) {
+   for (int y=0; y<world.h; y++) {
+      for(int x=0; x<world.w; x++) {
+          write(isFree(x,y,round) ? '.' : '#');
+      }
+      write("\n");
+   }
+}
+
+void solve1() {
+   State state; 
+
+   auto todo = [State(0,-1,0,0,0)];
+
+   ulong it = 0;
+   while (!todo.empty && it++ <= 10) {
+      state = todo.back;
+     
+      auto n = nextMoves(state)
+         .filter!(s => isFree(s.x, s.y, s.round))
+         .array;
+      
+      writeln(it, ' ', todo.length, ':', todo, " + ", n);
+
+      todo.popBack;
+      todo ~= n;
+         
+   }
+
 }
 
 void main() {
@@ -38,5 +97,16 @@ void main() {
    assert(!isFree(2,0,1));
    assert(!isFree(2,0,1));
    assert(isFree(2,1,1));
-   
+   writeln(wrap(-1,6));
+   assert(wrap(-1,6) == 5);
+   assert(wrap(-7,6) == 5);
+   assert(wrap(2,6) == 2);
+   assert(wrap(8,6) == 2);
+
+   solve1();
+   showMap(0);
+   for (int i=1; i<=18; i++) {
+      writeln("minute ", i);
+      showMap(i);
+   }
 }
