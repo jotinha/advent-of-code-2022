@@ -8,12 +8,8 @@ struct World {
 
 World world;
 
-struct State {
-    int x, y;
-    int rx, ry;
-    int round;
-};
-
+struct State { int x, y, round; }
+struct VisitedState { int x, y, rx, ry; }
 
 void load(string fname) {
    world.data = File(fname).byLineCopy
@@ -49,8 +45,6 @@ int wrap(int a, int b) {
 
 State[] nextMoves(State state) {
    state.round += 1;
-   //WRONG state.rx = (state.rx + 1) % world.w;
-   //WRONG state.ry = (state.ry + 1) % world.h;
    auto moves = [state, state, state, state, state]; 
    moves[0].x -= 1;
    moves[1].x += 1;
@@ -70,19 +64,19 @@ void showMap(int round) {
 
 int solve1() {
    State state; 
-   int[State] visited;
+   int[VisitedState] visited;
 
-   auto todo = [State(0,-1,0,0,0)];
+   auto todo = [State(0,-1,0)];
    ulong it = 0;
    while (!todo.empty && it<= 100_000_000) {
       state = todo.front;
       todo.popFront;
 
-      auto vs = state;
-      vs.rx = state.round.wrap(world.w);
-      vs.ry = state.round.wrap(world.h);
-      vs.round = 0;
-      //writeln(vs, state);
+      auto vs = VisitedState(
+         state.x, state.y, 
+         state.round.wrap(world.w),
+         state.round.wrap(world.h)
+      );
       
       if (vs in visited && visited[vs] <= state.round) continue;
       visited[vs] = state.round;
