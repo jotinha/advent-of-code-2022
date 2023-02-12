@@ -1,5 +1,4 @@
 import std.stdio, std.string, std.algorithm, std.range;
-import std.container : DList;
 
 struct World {
    string[] data; 
@@ -32,18 +31,16 @@ bool isFree(int x, int y, int round) {
       (x == world.w-1 && y == world.h) || // ending position also allowed
       x >= 0 && x < world.w &&
       y >= 0 && y < world.h &&
-      '^' != world.data[wrap(y + round,world.h)][x] &&
-      'v' != world.data[wrap(y - round,world.h)][x] &&
-      '<' != world.data[y][wrap(x + round,world.w)] &&
-      '>' != world.data[y][wrap(x - round,world.w)];
+      '^' != world.data[(y + round).wrap(world.h)][x] &&
+      'v' != world.data[(y - round).wrap(world.h)][x] &&
+      '<' != world.data[y][(x + round).wrap(world.w)] &&
+      '>' != world.data[y][(x - round).wrap(world.w)];
 }
 
 int wrap(int a, int b) {
    //d's implementation of modulo gives -1%6 == -1, and we want it to give -1%6 == 5
    return (b + (a % b)) % b;
 }
-
-
 
 State[] nextMoves(State state) {
    state.round += 1;
@@ -55,6 +52,7 @@ State[] nextMoves(State state) {
    //move 4 is wait
    return moves;
 }
+
 void showMap(int round) {
    for (int y=0; y<world.h; y++) {
       for(int x=0; x<world.w; x++) {
@@ -69,30 +67,26 @@ int shortestPath(State start, State end) {
    int[VisitedState] visited;
 
    auto todo = [start];
+   
    ulong it = 0;
-   while (!todo.empty && it<= 100_000_000) {
+   while (!todo.empty && it<= 1_000_000) {
       state = todo.front; // BFS
       todo.popFront;
 
       if (posEquals(state, end)) {
-         writeln("Found in ", it, " iterations");
+         //writeln("Found in ", it, " iterations");
          return state.round;
       }
  
       auto vs = VisitedState(
          state.x, state.y, 
-         state.round.wrap(world.w),
-         state.round.wrap(world.h)
+         state.round % world.w,
+         state.round % world.h
       );
       
       if (vs in visited && visited[vs] <= state.round) continue;
       visited[vs] = state.round;
       
-  
-      if ((it % 1000) == 0) {
-         writeln(it, ' ', todo.length);
-      }
-          
       auto n = nextMoves(state)
          .filter!(s => isFree(s.x, s.y, s.round))
          .array;
@@ -101,28 +95,20 @@ int shortestPath(State start, State end) {
       it++;
          
    }
-   return -1;
+   throw new Exception("Couldn't find path"); 
 
 }
 
 void main() {
-   load("input");
-   writeln(world);
+   //assert(wrap(-1,6) == 5); assert(wrap(-7,6) == 5);  assert(wrap(2,6) == 2); assert(wrap(8,6) == 2);
    
-   /*assert(!isFree(0,0,0));
-   assert(!isFree(1,0,0));
-   assert(isFree(0,1,0));
-   assert(isFree(0,1,0));
-   assert(isFree(2,0,0));
-   assert(!isFree(2,0,1));
-   assert(!isFree(2,0,1));
-   assert(isFree(2,1,1));*/
-   assert(wrap(-1,6) == 5);
-   assert(wrap(-7,6) == 5);
-   assert(wrap(2,6) == 2);
-   assert(wrap(8,6) == 2);
+   load("input");
 
-
+   /*for (int i=0; i<=18; i++) {
+      writeln("minute ", i);
+      showMap(i);
+   }*/
+ 
    auto a = State(0,-1,0);
    auto b = State(world.w-1, world.h, 0);
    
@@ -131,10 +117,5 @@ void main() {
    a.round = shortestPath(b, a);
    auto ans2 = shortestPath(a, b);   
  
-  /* showMap(0);
-   for (int i=1; i<=18; i++) {
-      writeln("minute ", i);
-      showMap(i);
-   }*/
    writeln(ans1,',',ans2);
 }
