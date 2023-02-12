@@ -21,9 +21,10 @@ void load(string fname) {
    world.h = cast(int)world.data.length; 
 }
 
-bool isTarget(int x, int y) {
-   return x == world.w-1 && y == world.h-1;
-}
+bool posEquals(State a, State b) {
+   // equal except for round number
+   return a.x == b.x && a.y == b.y;
+}; 
 
 bool isFree(int x, int y, int round) {
    return 
@@ -62,16 +63,21 @@ void showMap(int round) {
    }
 }
 
-int solve1() {
+int findPath(State start, State end) {
    State state; 
    int[VisitedState] visited;
 
-   auto todo = [State(0,-1,0)];
+   auto todo = [start];
    ulong it = 0;
    while (!todo.empty && it<= 100_000_000) {
-      state = todo.front;
+      state = todo.front; // BFS
       todo.popFront;
 
+      if (posEquals(state, end)) {
+         writeln("Found in ", it, " iterations");
+         return state.round;
+      }
+ 
       auto vs = VisitedState(
          state.x, state.y, 
          state.round.wrap(world.w),
@@ -81,11 +87,7 @@ int solve1() {
       if (vs in visited && visited[vs] <= state.round) continue;
       visited[vs] = state.round;
       
-      if (isTarget(state.x, state.y)) {
-         writeln("Found in ", it, " iterations");
-         return state.round+1;
-      }
-   
+  
       if ((it % 1000) == 0) {
          writeln(it, ' ', todo.length);
       }
@@ -99,6 +101,11 @@ int solve1() {
          
    }
    return -1;
+
+}
+
+int solve1() {
+   return findPath(State(0,-1,0), State(world.w-1, world.h-1)) + 1;
 
 }
 
