@@ -25,8 +25,13 @@ void load(string fname) {
    world.h = cast(int)world.data.length; 
 }
 
+bool isTarget(int x, int y) {
+   return x == world.w-1 && y == world.h-1;
+}
+
 bool isFree(int x, int y, int round) {
    return 
+      (x == 0 && y == -1) || // starting position is allowed
       x >= 0 && x < world.w &&
       y >= 0 && y < world.h &&
       '^' != world.data[wrap(y + round,world.h)][x] &&
@@ -63,25 +68,33 @@ void showMap(int round) {
    }
 }
 
-void solve1() {
+int solve1() {
    State state; 
 
    auto todo = [State(0,-1,0,0,0)];
 
    ulong it = 0;
-   while (!todo.empty && it++ <= 10) {
-      state = todo.back;
-     
+   while (!todo.empty && it<= 100_000) {
+      state = todo.front;
+      todo.popFront;
+    
+      if (isTarget(state.x, state.y)) {
+         return state.round+1;
+      }
+   
+      if ((it % 1000) == 0) {
+         writeln(it, ' ', todo.length);
+      }
+          
       auto n = nextMoves(state)
          .filter!(s => isFree(s.x, s.y, s.round))
          .array;
       
-      writeln(it, ' ', todo.length, ':', todo, " + ", n);
-
-      todo.popBack;
       todo ~= n;
+      it++;
          
    }
+   return -1;
 
 }
 
@@ -89,24 +102,26 @@ void main() {
    load("test");
    writeln(world);
    
-   assert(!isFree(0,0,0));
+   /*assert(!isFree(0,0,0));
    assert(!isFree(1,0,0));
    assert(isFree(0,1,0));
    assert(isFree(0,1,0));
    assert(isFree(2,0,0));
    assert(!isFree(2,0,1));
    assert(!isFree(2,0,1));
-   assert(isFree(2,1,1));
+   assert(isFree(2,1,1));*/
    writeln(wrap(-1,6));
    assert(wrap(-1,6) == 5);
    assert(wrap(-7,6) == 5);
    assert(wrap(2,6) == 2);
    assert(wrap(8,6) == 2);
 
-   solve1();
-   showMap(0);
+   auto ans1 = solve1();
+  /* showMap(0);
    for (int i=1; i<=18; i++) {
       writeln("minute ", i);
       showMap(i);
-   }
+   }*/
+   auto ans2= 0;
+   writeln(ans1,',',ans2);
 }
