@@ -1,5 +1,4 @@
 run: bin/main
-	clear
 	$<
 
 bin/main: main.d
