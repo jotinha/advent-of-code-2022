@@ -8,8 +8,9 @@ let enc = function | 0 -> '0' | 1 -> '1' | 2 -> '2' | -1 -> '-' | -2 -> '=' | _ 
 
 let add1 x y c = 
     let t = (dec x) + (dec y) + c in 
-    if t >= 3 then (enc (t-5),1) else (enc t,0)
-;;
+    if t >= 3  then (enc (t-5), 1) else 
+    if t <= -3 then (enc (t+5),-1) else 
+    (enc t, 0);;
 
 let rec addr xs ys carry = 
     match (xs,ys) with 
