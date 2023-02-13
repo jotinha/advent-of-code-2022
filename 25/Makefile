@@ -1,4 +1,5 @@
-all: 
-	@echo TODO,TODO
+all: main.ml
+	ocaml $< 
 
-
+install:
+	brew install ocaml
