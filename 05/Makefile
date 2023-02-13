@@ -5,7 +5,7 @@ all: bin/main
 
 bin/main: main.hs
 	mkdir -p bin
-	ghc -o $@ $< -no-keep-hi-files -no-keep-o-files 
+	ghc -o $@ $< -no-keep-hi-files -no-keep-o-files 1>&2
 
 clean:
 	rm -rf bin
