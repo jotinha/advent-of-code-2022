@@ -3,12 +3,12 @@ let implode cs = String.of_seq (List.to_seq cs);;
 
 print_endline (implode (explode "Hello world"));;
 
-let dec = function | '0' -> 0 | '1' -> 1 | '2' -> 2 | '3' -> 3 | '4' -> 4
-let enc = function | 0 -> '0' | 1 -> '1' | 2 -> '2' | 3 -> '3' | 4 -> '4'
+let dec = function | '0' -> 0 | '1' -> 1 | '2' -> 2 | '-' -> -1 | '=' -> -2 | _ -> -666
+let enc = function | 0 -> '0' | 1 -> '1' | 2 -> '2' | -1 -> '-' | -2 -> '=' | _ -> '?'
 
 let add1 x y c = 
     let t = (dec x) + (dec y) + c in 
-    if t >= 5 then (enc (t-5),1) else (enc t,0)
+    if t >= 3 then (enc (t-5),1) else (enc t,0)
 ;;
 
 let rec addr xs ys carry = 
